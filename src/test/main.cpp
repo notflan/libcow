@@ -4,9 +4,9 @@ int main()
 {
 	Cow real(4096);
 
-	Cow::Fake clone = real.clone();
+	Cow::Fake clone = real;
 	{
-		Cow::Fake clone2 = clone.clone();
+		Cow::Fake clone2 = clone;
 	}
 	return 0;
 }

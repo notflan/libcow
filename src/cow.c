@@ -2,22 +2,34 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <limits.h>
 #include <stddef.h>
+#include <errno.h>
 
 #include <cow.h>
+
+#define LIKELY(ex) __builtin_expect(!!(ex), 1)
+#define UNLIKELY(ex) __builtin_expect(!!(ex), 0)
 
 #define box(t) aligned_alloc(_Alignof(t), sizeof(t))
 
 #if defined(DEBUG) || defined(COW_TRACE)
-#define TRACE(msg, ...) (fprintf(stderr, "[TRACE] %s->%s %d: " msg "\n", __FILE__, __func__, __LINE__, __VA_ARGS__), (void)0)
+#define TRACE(msg, ...) (fprintf(stderr, "<libcow> [TRACE] %s->%s():%d: " msg "\n", __FILE__, __func__, __LINE__, __VA_ARGS__), (void)0)
 #else
 #define TRACE(msg, ...) ((void)0)
 #endif
+
+#if !defined(COW_NO_ASSERT)
+#define ASSERT(expr, msg) do { if(!(expr)) die("assertion failed: `" #expr  "`: " msg);  } while(0)
+#else
+#define ASSERT(op, msg) ((void)0)
+#endif
+
+#define LASSERT(expr, msg) ASSERT(LIKELY(expr), "(unexpected) " msg)
+#define UASSERT(expr, msg) ASSERT(UNLIKELY(expr), "(expected) " msg)
 
 struct cow {
 	void* origin; // ptr to mapped memory. This *MUST* be the first field and have an offset of 0.
@@ -30,8 +42,13 @@ _Static_assert(offsetof(cow_t, origin) == 0, "`cow_t.origin` must have an offset
 
 static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold)) void die(const char* error)
 {
-	perror(error);
-	exit(1);
+	fprintf(stderr, "<libcow> [FATAL]: ");
+	if(!errno)
+		fprintf(stderr, "%s\n (no matching errno, try compiling with `-DCOW_TRACE` and/or `-DDEBUG`)\n", error);
+	else
+		perror(error);
+
+	abort();
 }
 
 static inline cow_t* box_value(cow_t v)
@@ -39,6 +56,8 @@ static inline cow_t* box_value(cow_t v)
 	cow_t* boxed = box(cow_t);
 	TRACE("boxing cow_t { origin = %p, fd = 0x%x, size = %lu } -> %p (%lu bytes)", v.origin, v.fd, v.size, (const void*)boxed, sizeof(cow_t));
 	*boxed = v;
+
+	LASSERT(cow_ptr(boxed) == boxed->origin, "ptr extraction mismatch. this should never happen (check origin field offset)");
 	return boxed;
 }
 
@@ -81,7 +100,7 @@ cow_t* cow_create(size_t size)
 	ret.origin = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, ret.fd, 0);
 	if(ret.origin == MAP_FAILED) die("cow_create:mmap");
 
-	TRACE("mapped new cow page of %lu size at %p (memfd %d)", size, ret.origin, ret.fd);
+	TRACE("mapped new origin cow page of %lu size at %p (memfd %d)", size, ret.origin, ret.fd);
 	return box_value(ret);
 }
 

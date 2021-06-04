@@ -52,6 +52,13 @@ debug: | dirs $(PROJECT)-debug.a
 	-$(MAKE) dirs
 	$(MAKE) $(PROJECT)-debug.so
 
+# Rebuild both release and debug targets from scratch
+.PHONY: all
+all: | clean
+	-$(MAKE) release
+	-$(MAKE) clean-rebuild
+	-$(MAKE) debug
+
 # Targets
 
 dirs:

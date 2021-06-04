@@ -39,6 +39,7 @@ struct Cow {
 
 struct Cow::Fake : Cow {
 	Fake() = delete;
+	Fake(const Cow& real);
 	Fake(const Fake& copy);
 	Fake(Fake&& move);
 	~Fake();
@@ -50,7 +51,6 @@ struct Cow::Fake : Cow {
 	protected:
 	cow_t* get_raw() const override;
 	private:
-	Fake(const Cow& real);
 
 	cow_t* const fake;
 };

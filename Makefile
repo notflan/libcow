@@ -41,16 +41,16 @@ OBJ = $(OBJ_C) $(OBJ_CXX)
 # Phonies
 
 .PHONY: release
-release: | dirs $(PROJECT)-release.a
+release: | dirs lib$(PROJECT)-release.a
 	-$(MAKE) clean-rebuild
 	-$(MAKE) dirs
-	$(MAKE) $(PROJECT)-release.so
+	$(MAKE) lib$(PROJECT)-release.so
 
 .PHONY: debug
-debug: | dirs $(PROJECT)-debug.a
+debug: | dirs lib$(PROJECT)-debug.a
 	-$(MAKE) clean-rebuild
 	-$(MAKE) dirs
-	$(MAKE) $(PROJECT)-debug.so
+	$(MAKE) lib$(PROJECT)-debug.so
 
 # Rebuild both release and debug targets from scratch
 .PHONY: all
@@ -70,36 +70,36 @@ obj/c/%.o: %.c
 obj/cxx/%.o: %.cpp
 	$(CXX) -c $< $(CXXFLAGS) -o $@ $(LDFLAGS)
 
-$(PROJECT)-release.a: CFLAGS+= $(RELEASE_CFLAGS)
-$(PROJECT)-release.a: CXXFLAGS += $(RELEASE_CXXFLAGS)
-$(PROJECT)-release.a: LDFLAGS += $(RELEASE_LDFLAGS)
-$(PROJECT)-release.a: $(OBJ)
+lib$(PROJECT)-release.a: CFLAGS+= $(RELEASE_CFLAGS)
+lib$(PROJECT)-release.a: CXXFLAGS += $(RELEASE_CXXFLAGS)
+lib$(PROJECT)-release.a: LDFLAGS += $(RELEASE_LDFLAGS)
+lib$(PROJECT)-release.a: $(OBJ)
 	ar rcs $@ $^
-	ln -sf $@ $(PROJECT).a
+	ln -sf $@ lib$(PROJECT).a
 
-$(PROJECT)-debug.a: CFLAGS+= $(DEBUG_CFLAGS)
-$(PROJECT)-debug.a: CXXFLAGS += $(DEBUG_CXXFLAGS)
-$(PROJECT)-debug.a: LDFLAGS += $(DEBUG_LDFLAGS)
-$(PROJECT)-debug.a: $(OBJ)
+lib$(PROJECT)-debug.a: CFLAGS+= $(DEBUG_CFLAGS)
+lib$(PROJECT)-debug.a: CXXFLAGS += $(DEBUG_CXXFLAGS)
+lib$(PROJECT)-debug.a: LDFLAGS += $(DEBUG_LDFLAGS)
+lib$(PROJECT)-debug.a: $(OBJ)
 	ar rcs $@ $^
 
-$(PROJECT)-release.so: CFLAGS+= $(RELEASE_CFLAGS) -fPIC
-$(PROJECT)-release.so: CXXFLAGS += $(RELEASE_CXXFLAGS) -fPIC
-$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS)
-$(PROJECT)-release.so: $(OBJ)
+lib$(PROJECT)-release.so: CFLAGS+= $(RELEASE_CFLAGS) -fPIC
+lib$(PROJECT)-release.so: CXXFLAGS += $(RELEASE_CXXFLAGS) -fPIC
+lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS)
+lib$(PROJECT)-release.so: $(OBJ)
 	$(CXX) -shared $^ -o $@
 	$(STRIP) $@
-	ln -sf $@ $(PROJECT).so
+	ln -sf $@ lib$(PROJECT).so
 
-$(PROJECT)-debug.so: CFLAGS+= $(DEBUG_CFLAGS) -fPIC
-$(PROJECT)-debug.so: CXXFLAGS += $(DEBUG_CXXFLAGS) -fPIC
-$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS)
-$(PROJECT)-debug.so: $(OBJ)
+lib$(PROJECT)-debug.so: CFLAGS+= $(DEBUG_CFLAGS) -fPIC
+lib$(PROJECT)-debug.so: CXXFLAGS += $(DEBUG_CXXFLAGS) -fPIC
+lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS)
+lib$(PROJECT)-debug.so: $(OBJ)
 	$(CXX) -shared $^ -o $@
 
 clean-rebuild:
 	rm -rf obj
 
 clean: clean-rebuild
-	rm -f $(PROJECT){,-{release,debug,pgo}}.{a,so}
+	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so}
 

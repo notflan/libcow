@@ -37,10 +37,15 @@ static inline cow_t* box_value(cow_t v)
 
 static inline int shm_fd(size_t size)
 {
+#ifdef COW_NAME_SHM
 	_Thread_local static char buffer[12] = {0};
 	snprintf(buffer, 11, "0x%08lx", size);
 	//fprintf(stderr, "shm_fd_name: '%s'\n", buffer);
+	// XXX: Not entirely sure how ownership works for the string passed here... Let's not.
 	int fd = memfd_create(buffer, 0);
+#else
+	int fd = memfd_create("cow_create:shm_fd", 0);
+#endif
 	if(fd<=0) die("cow_create:shm_fd:memfd_create");
 	ftruncate(fd, size);
 	return fd;

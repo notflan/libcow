@@ -19,7 +19,7 @@ OPT_FLAGS?= $(addprefix -march=,$(MARCH)) -fgraphite -fopenmp -floop-parallelize
 CXX_OPT_FLAGS?= $(OPT_FLAGS) -felide-constructors
 
 CFLAGS   += $(COMMON_FLAGS) --std=gnu11
-CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 -fno-exceptions
+CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 #-fno-exceptions
 LDFLAGS  +=  
 
 STRIP=strip
@@ -51,6 +51,13 @@ debug: | dirs $(PROJECT)-debug.a
 	-$(MAKE) clean-rebuild
 	-$(MAKE) dirs
 	$(MAKE) $(PROJECT)-debug.so
+
+# Rebuild both release and debug targets from scratch
+.PHONY: all
+all: | clean
+	-$(MAKE) release
+	-$(MAKE) clean-rebuild
+	-$(MAKE) debug
 
 # Targets
 

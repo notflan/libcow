@@ -1,10 +1,15 @@
 #ifndef _COW_H
 #define _COW_H
 
+#ifdef __cplusplus
+#define restrict __restrict__
+extern "C" {
+#endif
+
 #include <stdlib.h>
 
 // Copy-on-write mapped memory.
-typedef struct cow cow_t, *cow;
+typedef struct cow cow_t;
 
 /// Create a new copy-on-write area of `size` bytes. 
 /// Writes to this instance pointer (`cow_ptr()`) are written to the allocated memory.
@@ -28,5 +33,10 @@ size_t cow_size(const cow_t* cow);
 ///// NOTE: This pointer **MUST NOT** be a *copy* of a pointer created with `cow_ptr`, but the pointer returned from `cow_ptr` exactly.
 //XXX: Too unsafe and not useful enough to warrant a function/macro.
 //#define cow_from_ptr(p) (cow_t*)(&(p))
+
+#ifdef __cplusplus
+#undef restrict
+}
+#endif
 
 #endif /* _COW_H */

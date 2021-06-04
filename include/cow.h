@@ -24,5 +24,9 @@ size_t cow_size(const cow_t* cow);
 #define cow_ptr(v) (*((void**)(v)))
 /// Get the `T*` pointer to the start of the area.
 #define cow_ptr_of(T, v) (*((T **)(v)))
+///// Get the `cow_t*` back from a pointer created with cow_ptr. 
+///// NOTE: This pointer **MUST NOT** be a *copy* of a pointer created with `cow_ptr`, but the pointer returned from `cow_ptr` exactly.
+//XXX: Too unsafe and not useful enough to warrant a function/macro.
+//#define cow_from_ptr(p) (cow_t*)(&(p))
 
 #endif /* _COW_H */

@@ -3,6 +3,7 @@
 
 #ifdef __cplusplus
 #define restrict __restrict__
+extern "C" {
 #endif
 
 #include <stdlib.h>
@@ -35,6 +36,7 @@ size_t cow_size(const cow_t* cow);
 
 #ifdef __cplusplus
 #undef restrict
+}
 #endif
 
 #endif /* _COW_H */

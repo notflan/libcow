@@ -24,16 +24,36 @@ Cow::_inner::_inner(cow_t* ptr) : ptr(ptr){}
 
 Cow::Cow(size_t size) : super(std::make_shared<_inner>(size)){}
 Cow::Cow(cow_t* raw) : super(std::make_shared<_inner>(raw)){}
-Cow::~Cow(){}
+
 Cow::Cow(Cow&& m) : super(std::move(*const_cast<std::shared_ptr<_inner>*>(&super))){}
+Cow::Cow(const Cow& c) : super(c.super){}
+Cow::~Cow(){}
 
 Cow Cow::from_raw(cow_t* owned) { if(cow_is_fake(owned)) throw "Trying to create real from fake raw"; else return Cow(owned); }
 
-Cow::Fake::Fake(const Cow& parent) : Cow(parent), fake(cow_clone(parent.super->ptr)){} 
-Cow::Fake::~Fake() { if(fake) { cow_free(fake); *const_cast<cow_t**>(&fake) = nullptr; } }
-Cow::Fake Cow::Fake::from_parent(const Cow& parent) { return Fake(parent); }
+Cow::Fake Cow::clone() const { return Fake::from_real(*this); }
+cow_t* Cow::get_raw() const { return super->ptr; }
 
+Cow::Fake::Fake(const Cow& copy) : Cow(copy), fake(cow_clone(copy.super->ptr)){}
+Cow::Fake::Fake(const Fake& copy) : Fake(*static_cast<const Cow*>(&copy)){}
 Cow::Fake::Fake(Fake&& move) : Cow(std::move(move)), fake(move.fake)
 {
-	*const_cast<cow_t**>(&fake) = nullptr;
+	*const_cast<cow_t**>(&move.fake) = nullptr;
+}
+Cow::Fake::~Fake() { if(fake) cow_free(fake); }
+
+Cow::Fake Cow::Fake::Fake::from_real(const Cow& real) { return Fake(real); }
+
+Cow::Fake Cow::Fake::clone() const { return Fake(*this); }
+cow_t* Cow::Fake::get_raw() const { return fake; }
+
+// Operators
+
+unsigned char& Cow::operator[](size_t index) {
+	if(index >= size()) throw "Size too large";
+	return as_bytes()[index];
+}
+const unsigned char& Cow::operator[](size_t index) const {
+	if(index >= size()) throw "Size too large";
+	return as_bytes()[index];
 }

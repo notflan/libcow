@@ -13,6 +13,12 @@
 
 #define box(t) aligned_alloc(_Alignof(t), sizeof(t))
 
+#if defined(DEBUG) || defined(COW_TRACE)
+#define TRACE(msg, ...) (fprintf(stderr, "[TRACE] %s->%s %d: " msg "\n", __FILE__, __func__, __LINE__, __VA_ARGS__), (void)0)
+#else
+#define TRACE(msg, ...) ((void)0)
+#endif
+
 struct cow {
 	void* origin; // ptr to mapped memory. This *MUST* be the first field and have an offset of 0.
 
@@ -31,6 +37,7 @@ static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold))
 static inline cow_t* box_value(cow_t v)
 {
 	cow_t* boxed = box(cow_t);
+	TRACE("boxing cow_t { origin = %p, fd = 0x%x, size = %lu } -> %p (%lu bytes)", v.origin, v.fd, v.size, (const void*)boxed, sizeof(cow_t));
 	*boxed = v;
 	return boxed;
 }
@@ -74,11 +81,13 @@ cow_t* cow_create(size_t size)
 	ret.origin = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, ret.fd, 0);
 	if(ret.origin == MAP_FAILED) die("cow_create:mmap");
 
+	TRACE("mapped new cow page of %lu size at %p (memfd %d)", size, ret.origin, ret.fd);
 	return box_value(ret);
 }
 
 void cow_free(cow_t* restrict cow)
 {
+	TRACE("unmapping %s cow of %lu size from %p (fd %d, real fd %d)", cow_is_fake(cow) ? "fake" : "and closing fd of origin", cow->size, cow->origin, cow->fd, cow_real_fd(cow));
 	munmap(cow->origin, cow->size);
 	if(!cow_is_fake(cow))
 		close(cow->fd);
@@ -94,5 +103,6 @@ cow_t* cow_clone(const cow_t* cow)
 	clone.fd = (~INT_MAX) | cow->fd;
 	clone.size = cow->size;
 
+	TRACE("mapped cloned cow page of %lu size from %p (%s) at %p (clone fd %d, parent fd %d, real fd %d)", clone.size, cow->origin, cow_is_fake(cow) ? "fake" : "origin", clone.origin, clone.fd, cow->fd, cow_real_fd(&clone));
 	return box_value(clone);
 }

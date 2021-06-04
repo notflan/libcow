@@ -19,7 +19,7 @@ OPT_FLAGS?= $(addprefix -march=,$(MARCH)) -fgraphite -fopenmp -floop-parallelize
 CXX_OPT_FLAGS?= $(OPT_FLAGS) -felide-constructors
 
 CFLAGS   += $(COMMON_FLAGS) --std=gnu11
-CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 -fno-exceptions
+CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 #-fno-exceptions
 LDFLAGS  +=  
 
 STRIP=strip

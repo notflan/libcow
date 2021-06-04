@@ -25,7 +25,7 @@ Cow::_inner::_inner(cow_t* ptr) : ptr(ptr){}
 Cow::Cow(size_t size) : super(std::make_shared<_inner>(size)){}
 Cow::Cow(cow_t* raw) : super(std::make_shared<_inner>(raw)){}
 
-Cow::Cow(Cow&& m) : super(std::move(*const_cast<std::shared_ptr<_inner>*>(&super))){}
+Cow::Cow(Cow&& m) : super(std::move(*const_cast<std::shared_ptr<_inner>*>(&m.super))){}
 Cow::Cow(const Cow& c) : super(c.super){}
 Cow::~Cow(){}
 
@@ -35,7 +35,7 @@ Cow::Fake Cow::clone() const { return Fake::from_real(*this); }
 cow_t* Cow::get_raw() const { return super->ptr; }
 
 Cow::Fake::Fake(const Cow& copy) : Cow(copy), fake(cow_clone(copy.super->ptr)){}
-Cow::Fake::Fake(const Fake& copy) : Fake(*static_cast<const Cow*>(&copy)){}
+Cow::Fake::Fake(const Fake& copy) : Cow(copy), fake(cow_clone(copy.fake)){}//Fake(*static_cast<const Cow*>(&copy)){}
 Cow::Fake::Fake(Fake&& move) : Cow(std::move(move)), fake(move.fake)
 {
 	*const_cast<cow_t**>(&move.fake) = nullptr;
@@ -44,7 +44,7 @@ Cow::Fake::~Fake() { if(fake) cow_free(fake); }
 
 Cow::Fake Cow::Fake::Fake::from_real(const Cow& real) { return Fake(real); }
 
-Cow::Fake Cow::Fake::clone() const { return Fake(*this); }
+Cow::Fake Cow::Fake::clone() const { return Fake(*static_cast<const Fake*>(this)); }
 cow_t* Cow::Fake::get_raw() const { return fake; }
 
 // Operators

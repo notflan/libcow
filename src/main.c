@@ -12,11 +12,11 @@ int main()
 	
 	strcpy(cow_ptr(origin), "Hello world");
 	cow_t* fake = cow_clone(origin);
-	printf("Fake (pre write): %s\n", (const char*)cow_ptr(fake));
+	printf("Fake (pre write): %s\n", cow_ptr_of(const char, fake));
 	strcpy(cow_ptr(fake), "Hello fake!");
 
-	printf("Real: %s\n", (const char*)cow_ptr(origin));
-	printf("Fake: %s\n", (const char*)cow_ptr(fake));
+	printf("Real: %s\n", cow_ptr_of(const char, origin));
+	printf("Fake: %s\n", cow_ptr_of(const char, fake));
 	cow_free(fake);
 	cow_free(origin);
 

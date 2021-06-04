@@ -7,21 +7,20 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <limits.h>
+#include <stddef.h>
 
 #include <cow.h>
 
 #define box(t) aligned_alloc(_Alignof(t), sizeof(t))
-#define box_value_any(v) ({ __typeof(v)* _boxed = box(__typeof(v)); \
-			*_boxed = (v); \
-			_boxed; })
-
 
 struct cow {
-	void* origin;
+	void* origin; // ptr to mapped memory. This *MUST* be the first field and have an offset of 0.
 
 	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
 	size_t size;
 }; // cow_t, *cow
+
+_Static_assert(offsetof(cow_t, origin) == 0, "`cow_t.origin` must have an offset of 0.");
 
 static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold)) void die(const char* error)
 {
@@ -92,74 +91,3 @@ cow_t* cow_clone(const cow_t* cow)
 
 	return box_value(clone);
 }
-/*
-void* cow_ptr(cow_t* restrict cow)
-{
-	return cow->origin;
-}
-
-const void* cow_ptr_const(const cow_t* cow)
-{
-	return cow->origin;
-}
-*/
-
-#ifdef DEMO // This code works
-void alter(void* map_ptr)
-{
-	strcpy(map_ptr, "Hello two");
-}
-
-int main()
-{
-	// This works!
-	int graph = shm_fd();
-	void* map_ptr = mmap(NULL, SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, graph, 0);
-	if(map_ptr == MAP_FAILED) die("map_ptr");
-	strcpy(map_ptr, "Hello world");
-	printf("Ptr begins: %s\n", (const char*)map_ptr);
-	{
-		void* map_alter = mmap(map_ptr, SIZE, PROT_READ|PROT_WRITE, MAP_PRIVATE, graph, 0);
-		if(map_alter == MAP_FAILED) die("map_alter");
-		printf("Alter begins: %s\n", (const char*)map_alter);
-		alter(map_alter);
-		printf("Alter ends: %s\n", (const char*)map_alter);
-		munmap(map_alter, SIZE);
-	}
-	printf("Ptr ends: %s\n", (const char*) map_ptr);
-	munmap(map_ptr, SIZE);
-	close(graph);
-	return 0;
-}
-#endif
-// Doesn't work...
-#if 0
-int main()
-{
-	void* map_ptr = mmap(NULL, SIZE, PROT_READ|PROT_WRITE, MAP_ANON | MAP_SHARED, 0, 0);
-	if(map_ptr == MAP_FAILED) die("map_ptr");
-	printf("First ptr is: %p\n  - '", map_ptr);
-	strcpy(map_ptr, "Hello world");
-	printf("%s'\n", (const char*)map_ptr);
-
-#ifdef USE_FORK
-	if(fork()>0) { // Eh... This is ugly.
-		printf("Forked...\n");
-		void* map_alter = mmap(map_ptr, SIZE, PROT_READ|PROT_WRITE, MAP_ANON | MAP_FIXED |MAP_PRIVATE, 0, 0);
-#else
-		//doesnt' work....
-		void* map_alter = mmap(map_ptr, SIZE, PROT_READ|PROT_WRITE, MAP_ANON | MAP_PRIVATE, 0, 0);
-#endif
-		if(map_alter == MAP_FAILED) die("map_alter");
-		printf("Second ptr is: %p\n  - '", map_alter);
-		printf("%s' - '", (const char*)map_alter);
-		strcpy(map_alter, "Hello two");
-		printf("%s'\n", (const char*)map_alter);
-#ifdef USE_FORK
-	} else 
-#endif
-		printf("First is still? '%s'\n", (volatile const char*)map_ptr);
-	
-	return 0;
-}
-#endif

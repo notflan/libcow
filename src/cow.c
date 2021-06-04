@@ -8,15 +8,20 @@
 #include <sys/mman.h>
 #include <limits.h>
 
-#define SIZE 4096
+#include <cow.h>
 
-// Copy-on-write mapped memory.
-typedef struct cow {
+#define box(t) aligned_alloc(_Alignof(t), sizeof(t))
+#define box_value_any(v) ({ __typeof(v)* _boxed = box(__typeof(v)); \
+			*_boxed = (v); \
+			_boxed; })
+
+
+struct cow {
 	void* origin;
 
 	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
 	size_t size;
-} cow_t;
+}; // cow_t, *cow
 
 static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold)) void die(const char* error)
 {
@@ -24,9 +29,16 @@ static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold))
 	exit(1);
 }
 
+static inline cow_t* box_value(cow_t v)
+{
+	cow_t* boxed = box(cow_t);
+	*boxed = v;
+	return boxed;
+}
+
 static inline int shm_fd(size_t size)
 {
-	_Thread_local static char buffer[12] = {};
+	_Thread_local static char buffer[12] = {0};
 	snprintf(buffer, 11, "0x%08lx", size);
 	//fprintf(stderr, "shm_fd_name: '%s'\n", buffer);
 	int fd = memfd_create(buffer, 0);
@@ -45,7 +57,12 @@ int cow_is_fake(const cow_t* cow)
 	return cow->fd<0;
 }
 
-cow_t cow_create(size_t size)
+size_t cow_size(const cow_t* cow)
+{
+	return cow->size;
+}
+
+cow_t* cow_create(size_t size)
 {
 	cow_t ret;
 	ret.size = size;
@@ -53,28 +70,29 @@ cow_t cow_create(size_t size)
 	ret.origin = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, ret.fd, 0);
 	if(ret.origin == MAP_FAILED) die("cow_create:mmap");
 
-	return ret;
+	return box_value(ret);
 }
 
-void cow_free(cow_t cow)
+void cow_free(cow_t* restrict cow)
 {
-	munmap(cow.origin, cow.size);
-	if(!cow_is_fake(&cow))
-		close(cow.fd);
+	munmap(cow->origin, cow->size);
+	if(!cow_is_fake(cow))
+		close(cow->fd);
+	free(cow);
 }
 
-cow_t cow_clone(cow_t cow)
+cow_t* cow_clone(const cow_t* cow)
 {
 	cow_t clone;
 
-	clone.origin = mmap(cow.origin, cow.size, PROT_READ|PROT_WRITE, MAP_PRIVATE, cow_real_fd(&cow), 0);
+	clone.origin = mmap(cow->origin, cow->size, PROT_READ|PROT_WRITE, MAP_PRIVATE, cow_real_fd(cow), 0);
 	if(clone.origin == MAP_FAILED) die("cow_clone:mmap");
-	clone.fd = (~INT_MAX) | cow.fd;
-	clone.size = cow.size;
+	clone.fd = (~INT_MAX) | cow->fd;
+	clone.size = cow->size;
 
-	return clone;
+	return box_value(clone);
 }
-
+/*
 void* cow_ptr(cow_t* restrict cow)
 {
 	return cow->origin;
@@ -84,22 +102,7 @@ const void* cow_ptr_const(const cow_t* cow)
 {
 	return cow->origin;
 }
-
-int main()
-{
-	cow_t origin = cow_create(SIZE);
-	
-	strcpy(cow_ptr(&origin), "Hello world");
-	cow_t fake = cow_clone(origin);
-	printf("Fake (pre write): %s\n", (const char*)cow_ptr(&fake));
-	strcpy(cow_ptr(&fake), "Hello fake!");
-
-	printf("Real: %s\n", (const char*)cow_ptr(&origin));
-	printf("Fake: %s\n", (const char*)cow_ptr(&fake));
-	cow_free(fake);
-	cow_free(origin);
-	return 0;
-}
+*/
 
 #ifdef DEMO // This code works
 void alter(void* map_ptr)

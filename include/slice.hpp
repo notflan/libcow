@@ -45,6 +45,11 @@ struct Span {
 
 	inline Slice slice(size_t start, size_t len) { if(bounds_ok(start,len)) return Slice(ptr()+start, len); else throw "Out of bounds slice"; }
 	inline Slice slice(size_t start) { return slice(start, size()-start); }
+	inline Slice slice() { return slice(0, size()); }
+	template<typename U>
+	inline Span<U>::Slice reinterpret() { return typename Span<U>::Slice((U*)area(), size_bytes() / sizeof(U)); }	
+	template<typename U>
+	inline Span<const U>::Slice reinterpret() const { return typename Span<const U>::Slice((const U*)area(), size_bytes() / sizeof(U)); }
 };
 
 /// A slice of memory with a backing pointer and size.
@@ -59,6 +64,7 @@ struct Span<T>::Slice : public Span<T> {
 	inline const void* area() const override { return _area; }
 	inline void* area() override { return _area; }
 	inline size_t size() const override { return _size; }
+
 	
 	private:
 	void* const _area;

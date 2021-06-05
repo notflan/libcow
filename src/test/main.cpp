@@ -4,7 +4,87 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <vector>
+
 using namespace _cow_util;
+
+namespace Tiling {
+	struct Map;
+
+	enum class Direction {
+		Up, Right, Down, Left
+	};
+
+	// Quad-linked list to upper, right, lower, left segments.
+	struct Segment { 
+		friend class Map;
+		Segment(size_t id) : id(id) {}
+		//Segment(Map& owner) : owner(owner){}
+		
+		~Segment() {
+			// Unset pointers of neighbours.
+			if(above) above->below = nullptr;
+			if(right) right->left = nullptr;
+			if(below) below->above = nullptr;
+			if(left)  left->right = nullptr;
+		}
+	private:
+		size_t id;
+
+		//TODO
+		//Cow raw_tiles;
+		//Cow taw_graphics;
+
+		// Links will be NULL if there is no loaded segment in their position.
+		// The objects themselves live in Map's segment registry (seg_reg).
+		Segment* above;
+		Segment* right;
+		Segment* below;
+		Segment* left;
+	};
+
+	struct Map {
+		// Remove a registered Segment. Resetting its neighbours' links if needed.
+		// The reference will be invalid after calling this function.
+		void unregister_segment(Segment& segment)
+		{
+			if(segment.id<SIZE_MAX) {
+				seg_reg.erase(seg_reg.begin()+ segment.id);
+			} else throw "dead segment unregistered";
+			segment.id = SIZE_MAX;
+		}
+		// Register a new Segment and return it. The Segment will not be connected to any other.
+		Segment& register_segment()
+		{
+			//seg_reg.push_back(Segment(seg_reg.size()));
+			seg_reg.emplace_back(seg_reg.size());
+			auto& seg = seg_reg.back();
+			return seg;
+		}
+		// Register a new Segment and then attach it to the referenced one at the position specified by `to`.
+		Segment& register_segment(Segment& attach, Direction to)
+		{
+			auto& seg = register_segment();
+
+			switch(to) {
+				case Direction::Up:
+					attach.above = &seg; break;
+				case Direction::Right:
+					attach.right = &seg; break;
+				case Direction::Down:
+					attach.below = &seg; break;
+				case Direction::Left:
+					attach.left = &seg; break;
+			}
+			
+			return seg;
+		}
+	private:
+		// All segments live here. 
+		// All segments have a lifetime lower than this object.
+		std::vector<Segment> seg_reg;
+	};
+}
 
 template<typename T = unsigned char>
 void print_slice(Slice<T> memory)

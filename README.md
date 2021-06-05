@@ -5,6 +5,8 @@ Automatic copy-on-write semantic memory slices for use in C (and C++)
 See `include/cow.h` for documentation on each function.
 Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal non-prototpyed items use the namespace `_cow_` or `_COW_`.
 
+The C++ interface defines the type `Cow`, a reference-counted wrapper over `cow_t` instances that supports cloning through its subtype, `Cow::Fake`, and automatically ensures the originally created `cow_t` is not destroyed until all its clones are, as well as the namespace `_cow_util` which contains memory accessor helpers `Span<T>` and `Slice<T>` (aka `Span<T>::Slice`).
+
 ## Building
 Run `make` to build to build the `release` (optimised) target of the library.
 It will create four files: `libcow-release.a`, `libcow-release.so`, `libcow.a`, and `libcow.so`.

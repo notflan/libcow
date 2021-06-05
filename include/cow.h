@@ -9,7 +9,7 @@ extern "C" {
 #include <stdlib.h>
 
 // Copy-on-write mapped memory.
-typedef struct cow cow_t;
+typedef struct cow_mapped_slice cow_t;
 
 /// Create a new copy-on-write area of `size` bytes. 
 /// Writes to this instance pointer (`cow_ptr()`) are written to the allocated memory.

@@ -31,14 +31,8 @@
 #define LASSERT(expr, msg) ASSERT(LIKELY(expr), "(unexpected) " msg)
 #define UASSERT(expr, msg) ASSERT(UNLIKELY(expr), "(expected) " msg)
 
-struct cow {
-	void* origin; // ptr to mapped memory. This *MUST* be the first field and have an offset of 0.
-
-	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
-	size_t size;
-}; // cow_t, *cow
-
-_Static_assert(offsetof(cow_t, origin) == 0, "`cow_t.origin` must have an offset of 0.");
+// struct cow { ... }
+#include "cow_t.h"
 
 static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold)) void die(const char* error)
 {
@@ -92,7 +86,7 @@ size_t cow_size(const cow_t* cow)
 	return cow->size;
 }
 
-cow_t* cow_create(size_t size)
+inline internal cow_t _cow_create_unboxed(size_t size)
 {
 	cow_t ret;
 	ret.size = size;
@@ -101,15 +95,24 @@ cow_t* cow_create(size_t size)
 	if(ret.origin == MAP_FAILED) die("cow_create:mmap");
 
 	TRACE("mapped new origin cow page of %lu size at %p (memfd %d)", size, ret.origin, ret.fd);
-	return box_value(ret);
+	return ret;
+}
+cow_t* cow_create(size_t size)
+{	
+	return box_value(_cow_create_unboxed(size));
 }
 
-void cow_free(cow_t* restrict cow)
+inline internal void _cow_free_unboxed(const cow_t* cow)
 {
 	TRACE("unmapping %s cow of %lu size from %p (fd %d, real fd %d)", cow_is_fake(cow) ? "fake" : "and closing fd of origin", cow->size, cow->origin, cow->fd, cow_real_fd(cow));
 	munmap(cow->origin, cow->size);
 	if(!cow_is_fake(cow))
 		close(cow->fd);
+}
+
+void cow_free(cow_t* restrict cow)
+{
+	_cow_free_unboxed(cow);
 	free(cow);
 }
 

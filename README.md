@@ -3,7 +3,7 @@ Automatic copy-on-write semantic memory slices for use in C (and C++)
 
 # Usage
 See `include/cow.h` for documentation on each function.
-Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`.
+Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal non-prototpyed items use the namespace `_cow_` or `_COW_`.
 
 ## Building
 Run `make` to build to build the `release` (optimised) target of the library.

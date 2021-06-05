@@ -1,8 +1,17 @@
 #include <cow.hpp>
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
+#include <array>
+
+int main()
+{
+	return 0;
+}
+
+/*
 template<typename T = unsigned char>
 void print_slice(Slice<T> memory)
 {
@@ -54,4 +63,4 @@ int main()
 	read_fake(clone); //clone still functions because of refcount on origin.
 
 	return 0;
-}
+}*/

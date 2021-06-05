@@ -4,9 +4,9 @@
 
 #include <memory>
 
-#include "slice.hpp"
+#include "cow/slice.hpp"
 
-struct Cow : public Span<unsigned char> {
+struct Cow : public _cow_util::Span<unsigned char> {
 	struct Fake;
 	Cow() = delete;
 

@@ -6,7 +6,7 @@
 
 #include "slice.hpp"
 
-struct Cow : public Slice<unsigned char> {
+struct Cow : public Span<unsigned char> {
 	struct Fake;
 	Cow() = delete;
 
@@ -30,7 +30,7 @@ struct Cow : public Slice<unsigned char> {
 	/// 	  There is also likely no benefit using this over `size()` in LTO enabled builds.
 	///
 	/// XXX: Deprecated function for now. It seems `size()` offers better codegen on LTO and non-LTO enabled builds.
-	[[deprecated]] inline size_t size_unsafe() const { return _cow_size_unsafe(get_raw()); }
+	[[deprecated("size() is safer and offers better codegen.")]] inline size_t size_unsafe() const { return _cow_size_unsafe(get_raw()); }
 	
 	static Cow from_raw(cow_t* owned);
 

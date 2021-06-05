@@ -16,13 +16,23 @@ struct Span {
 	inline const unsigned char* as_bytes() const { return (const unsigned char*)area(); }
 
 	inline T& operator[](size_t index) {
-		if(index >= size()) throw "Size too large";
+		if(index >= size()) throw "index out of range";
 		return ptr()[index];
 	}
 	inline const T& operator[](size_t index) const {
-		if(index >= size()) throw "Size too large";
+		if(index >= size()) throw "index out of range";
 		return ptr()[index];
 	}
+
+	inline T* operator&() { return &(*this)[0]; }
+	inline const T* operator&() const {return &(*this)[0]; }
+
+	inline T* operator->() { return &(*this)[0]; }
+	inline const T* operator->() const {return &(*this)[0]; }
+
+	inline T& operator*() { return (*this)[0]; }
+	inline const T& operator*() const { return (*this)[0]; }
+
 
 	template<typename U>
 	inline U* area_as() requires(sizeof(T) % sizeof(U) == 0) { return (U*)area(); }
@@ -34,18 +44,44 @@ struct Span {
 
 	struct Slice;
 
-	inline bool bounds_ok(size_t start, size_t len)
-	{
-		return (start + len) < size();
-	}
-	inline bool bounds_ok(size_t start)
+	inline bool bounds_ok(size_t start) const
 	{
 		return start < size();
 	}
+	inline bool bounds_ok(size_t start, size_t len) const
+	{
+		return (start + len) <= size() && bounds_ok(start);
+	}
 
+	inline ssize_t wrap_len(ssize_t len) const
+	{
+		if(size() ==0 ) return 0;
+		return len < 0 ? wrap_len(size() + len) : ((size_t)len) % size();
+	}
+
+	/// Slice (absolute). Specify start and end.
+	inline const Slice slice_abs(size_t start, size_t end) const { auto len = end -start; if(bounds_ok(start,len)) return Slice(const_cast<T*>(ptr()+start), len); else throw "Out of bounds slice"; }
+	inline Slice slice_abs(size_t start, size_t end) { auto len = end -start; if(bounds_ok(start,len)) return Slice(ptr()+start, len); else throw "Out of bounds slice"; }
+
+	/// Slice (relative). Specify start and length.
+	inline const Slice slice(size_t start, size_t len) const { if(bounds_ok(start,len)) return Slice(const_cast<T*>(ptr()+start), len); else throw "Out of bounds slice"; }
 	inline Slice slice(size_t start, size_t len) { if(bounds_ok(start,len)) return Slice(ptr()+start, len); else throw "Out of bounds slice"; }
-	inline Slice slice(size_t start) { return slice(start, size()-start); }
+	
+
+	/// Slice from 0. Specify length.
+	inline Slice slice(size_t len) { return slice(0, len); }
+	inline const Slice slice(size_t len) const { return slice(0, len); }//slice(start, size()-start); }
+
+	/// Slice total.
 	inline Slice slice() { return slice(0, size()); }
+	inline const Slice slice() const { return slice(0, size()); }
+
+	/// Slice wrapping. Specify start and end that may wrap over and/or under the span's size.
+	inline Slice slice_wrap(ssize_t start, ssize_t end) { return slice_abs((size_t)wrap_len(start), (size_t)wrap_len(end)); }
+	inline const Slice slice_wrap(ssize_t start, ssize_t end) const { return slice_abs((size_t)wrap_len(start), (size_t)wrap_len(end)); }
+	inline Slice slice_wrap(ssize_t len) { return slice_abs((size_t)wrap_len(len)); }
+	inline const Slice slice_wrap(ssize_t len) const { return slice_abs((size_t)wrap_len(len)); }
+
 	template<typename U>
 	inline Span<U>::Slice reinterpret() { return typename Span<U>::Slice((U*)area(), size_bytes() / sizeof(U)); }	
 	template<typename U>

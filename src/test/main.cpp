@@ -25,7 +25,7 @@ int main()
 	Cow real(4096);
 
 	printf("Created real: ");
-	print_slice(real);
+	print_slice(real.slice_wrap(-20, -10));
 
 	write_fake(real, "Hello world");
 	read_fake(real);

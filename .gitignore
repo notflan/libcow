@@ -3,3 +3,4 @@ cow-*
 *.so
 obj/
 *~
+vgcore.*

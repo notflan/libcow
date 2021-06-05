@@ -4,14 +4,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <array>
+using namespace _cow_util;
 
-int main()
-{
-	return 0;
-}
-
-/*
 template<typename T = unsigned char>
 void print_slice(Slice<T> memory)
 {
@@ -40,8 +34,10 @@ void moving_cow(Cow moved)
 int main()
 {
 	Cow real(4096);
+	memset(real, 0, real.size_bytes());
 
 	printf("Created real: ");
+	print_slice(real);
 	print_slice(real.slice_wrap(-20, -10));
 
 	write_fake(real, "Hello world");
@@ -63,4 +59,4 @@ int main()
 	read_fake(clone); //clone still functions because of refcount on origin.
 
 	return 0;
-}*/
+}

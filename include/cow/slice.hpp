@@ -34,6 +34,8 @@ namespace _cow_util {
 		inline T& operator*() { return (*this)[0]; }
 		inline const T& operator*() const { return (*this)[0]; }
 
+		inline operator const T*() const { return &(*this)[0]; }
+		inline operator T*() { return &(*this)[0]; }
 
 		template<typename U>
 		inline U* area_as() requires(sizeof(T) % sizeof(U) == 0) { return (U*)area(); }
@@ -44,6 +46,9 @@ namespace _cow_util {
 		size_t size_as() const requires(sizeof(T) % sizeof(U) == 0) { return size_bytes() / sizeof(U); }
 
 		struct Slice;
+
+		inline operator Slice() { return Slice(ptr(), size()); }
+		inline operator const Slice() const { return Slice(const_cast<T*>(ptr()), size()); }
 
 		inline bool bounds_ok(size_t start) const
 		{
@@ -101,8 +106,7 @@ namespace _cow_util {
 		inline const void* area() const override { return _area; }
 		inline void* area() override { return _area; }
 		inline size_t size() const override { return _size; }
-
-		
+	
 		private:
 		void* const _area;
 		const size_t _size;

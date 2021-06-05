@@ -39,6 +39,8 @@ Cow Cow::from_raw(cow_t* owned) { if(cow_is_fake(owned)) throw "Trying to create
 Cow::Fake Cow::clone() const { return Fake::from_real(*this); }
 cow_t* Cow::get_raw() const { return super->ptr(); }
 
+size_t Cow::size() const { return super->cow.size; }
+
 Cow::Fake::Fake(const Cow& copy) : Cow(copy), fake(cow_clone(copy.super->ptr())){}
 Cow::Fake::Fake(const Fake& copy) : Cow(copy), fake(cow_clone(copy.fake)){}//Fake(*static_cast<const Cow*>(&copy)){}
 Cow::Fake::Fake(Fake&& move) : Cow(std::move(move)), fake(move.fake)
@@ -54,11 +56,3 @@ cow_t* Cow::Fake::get_raw() const { return fake; }
 
 // Operators
 
-unsigned char& Cow::operator[](size_t index) {
-	if(index >= size()) throw "Size too large";
-	return as_bytes()[index];
-}
-const unsigned char& Cow::operator[](size_t index) const {
-	if(index >= size()) throw "Size too large";
-	return as_bytes()[index];
-}

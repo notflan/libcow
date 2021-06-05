@@ -24,14 +24,19 @@ cow_t* cow_clone(const cow_t* cow);
 int cow_is_fake(const cow_t* cow);
 /// Get the size of this cow area.
 size_t cow_size(const cow_t* cow);
+
 /// Get the size of this cow area by assuming layout. This should work assuming "cow_t.h"'s build assertions didn't fail and avoids an extra call.
+/// XXX: Deprecated function unpon seeing preferable codegen for using `cow_size()` over this. Use `cow_size()` instead.
+static inline
 #ifdef _COW_NO_ASSUME_ABI
-#define cow_size_unsafe(v) cow_size(v)
+#define _cow_size_unsafe(v) cow_size(v)
 #else
 // XXX: This macro is *VERY* ABI sensitive. This shouldn't be used if the ABI has changed since the build of libcow's `cow_t.h` passed its static assertions in *both* the C and C++ implementations.
 // The C++ API uses this by default for its `Cow::size()` function.
-#define cow_size_unsafe(v) *(((size_t*)(v))+1)
+#define _cow_size_unsafe(v) (*(((size_t*)(v))+1))
+	__attribute__((deprecated)) 
 #endif
+	size_t cow_size_unsafe(const cow_t* v) { return _cow_size_unsafe(v); }
 
 /// Get the `void*` pointer to the start of the area.
 #define cow_ptr(v) (*((void**)(v)))

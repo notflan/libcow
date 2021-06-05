@@ -27,7 +27,9 @@ struct Cow {
 	///
 	/// Note: This behaviour can be diabled by building with `-DCOW_NO_ASSUME_ABI`. In this case, this function calls out to the C API to determine the size.
 	/// 	  There is also likely no benefit using this over `size()` in LTO enabled builds.
-	inline size_t size_unsafe() const { return cow_size_unsafe(get_raw()); }
+	///
+	/// XXX: Deprecated function for now. It seems `size()` offers better codegen on LTO and non-LTO enabled builds.
+	[[deprecated]] inline size_t size_unsafe() const { return _cow_size_unsafe(get_raw()); }
 	
 	inline unsigned char* as_bytes() { return (unsigned char*)area(); }
 	inline const unsigned char* as_bytes() const { return (const unsigned char*)area(); }

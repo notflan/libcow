@@ -4,8 +4,9 @@
 
 #include <memory>
 
+#include "slice.hpp"
 
-struct Cow {
+struct Cow : public Slice<unsigned char> {
 	struct Fake;
 	Cow() = delete;
 
@@ -15,13 +16,13 @@ struct Cow {
 
 	virtual Fake clone() const;
 
-	inline void* area() { return cow_ptr(get_raw()); }
-	inline const void* area() const { return cow_ptr_of(const void, get_raw()); }
+	inline void* area() override { return cow_ptr(get_raw()); }
+	inline const void* area() const override { return cow_ptr_of(const void, get_raw()); }
 
 	/// Get the size of the mapped area.
 	///
 	/// Note: This calls into `_inner`'s internals. To skip the call on non-LTO builds, use `size_unsafe()`.
-	size_t size() const;
+	size_t size() const override;
 	/// Get the size by assuming the ABI layout of cow_t to be correct. Potentially faster but ABI sensitive.
 	/// This shouldn't be a problem if all build static assertions passed.
 	///
@@ -31,18 +32,6 @@ struct Cow {
 	/// XXX: Deprecated function for now. It seems `size()` offers better codegen on LTO and non-LTO enabled builds.
 	[[deprecated]] inline size_t size_unsafe() const { return _cow_size_unsafe(get_raw()); }
 	
-	inline unsigned char* as_bytes() { return (unsigned char*)area(); }
-	inline const unsigned char* as_bytes() const { return (const unsigned char*)area(); }
-
-	inline unsigned char& operator[](size_t index) {
-		if(index >= size()) throw "Size too large";
-		return as_bytes()[index];
-	}
-	inline const unsigned char& operator[](size_t index) const {
-		if(index >= size()) throw "Size too large";
-		return as_bytes()[index];
-	}
-
 	static Cow from_raw(cow_t* owned);
 
 	private:
@@ -56,7 +45,7 @@ struct Cow {
 
 };
 
-struct Cow::Fake : Cow {
+struct Cow::Fake : public Cow {
 	Fake() = delete;
 	Fake(const Cow& real);
 	Fake(const Fake& copy);

@@ -34,7 +34,7 @@ static inline
 // XXX: This macro is *VERY* ABI sensitive. This shouldn't be used if the ABI has changed since the build of libcow's `cow_t.h` passed its static assertions in *both* the C and C++ implementations.
 // The C++ API uses this by default for its `Cow::size()` function.
 #define _cow_size_unsafe(v) (*(((size_t*)(v))+1))
-	__attribute__((deprecated)) 
+	__attribute__((deprecated("size() is safer and offers better codegen."))) 
 #endif
 	size_t cow_size_unsafe(const cow_t* v) { return _cow_size_unsafe(v); }
 

@@ -3,6 +3,11 @@
 #include <cstdio>
 #include <cstring>
 
+void print_slice(Slice<unsigned char> memory)
+{
+	printf("slice: { %p, %lu }\n", memory.area(), memory.size());
+}
+
 void write_fake(Cow& clone, const char* string)
 {
 	strncpy(clone.area_as<char>(), string, clone.size_as<char>()-1);
@@ -16,6 +21,9 @@ void read_fake(const Cow& clone)
 int main()
 {
 	Cow real(4096);
+
+	printf("Created real: ");
+	print_slice(real);	
 
 	write_fake(real, "Hello world");
 	read_fake(real);

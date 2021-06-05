@@ -51,7 +51,7 @@ struct Span {
 template<typename T>
 struct Span<T>::Slice : public Span<T> {
 	inline Slice(T* ptr, size_t sz) : _area((void*)ptr), _size(sz){}
-	inline Slice(const Span<T>& slice) : _area(slice.area()), _size(slice.size()){}
+	inline Slice(const Span<T>& slice) : _area(const_cast<void*>(slice.area())), _size(slice.size()){}
 	inline Slice(const Slice& copy) = default;
 	inline Slice(Slice&& copy) : _area(copy._area), _size(copy._size){ *const_cast<size_t*>(&copy._size) = 0; }
 	Slice() = delete;
@@ -65,5 +65,6 @@ struct Span<T>::Slice : public Span<T> {
 	const size_t _size;
 };
 
+
 template<typename T>
-typename Span<T>::Slice Slice;
+using Slice = Span<T>::Slice;

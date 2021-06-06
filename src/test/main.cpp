@@ -3,13 +3,65 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <array>
 
 #include <vector>
 
 using namespace _cow_util;
 
+/// UTF8 multibyte 4.
+struct utf8_t {
+	const static constexpr size_t MULTIBYTE =4; 
+	typedef std::array<char, MULTIBYTE+1> Unicode;
+	
+	constexpr inline utf8_t() { data[0] = 0; }
+		
+	template<size_t N>
+	constexpr inline utf8_t(const char (&buffer)[N])
+	{
+		static_assert(N<=MULTIBYTE, "Expected multibyte 4");
+		data = {
+			buffer[0],
+			buffer[1],
+			buffer[2],
+			buffer[3],
+			0,
+		};
+	}
+
+	constexpr inline utf8_t(char ascii) {
+		data[0] = ascii;
+		data[1] = 0;
+	}
+
+	constexpr inline utf8_t(const char* c) {
+		for(int i=0;i<MULTIBYTE && (data[i] = c[i]); i++) (void)0;	
+	}
+
+	constexpr inline utf8_t(const Unicode& data) : data(data) {}
+	
+		
+	constexpr inline operator const char*() const { return &data[0]; }
+	constexpr inline operator char*() { return &data[0]; }
+
+	constexpr inline const char* c_str() const { return &data[0]; }
+	constexpr inline char* c_str() { return &data[0]; }
+
+	constexpr inline const char* operator&() const { return c_str(); }
+	constexpr inline char* operator&() { return c_str(); }
+
+	Unicode data;
+};
+
 namespace Tiling {
 	struct Map;
+
+	struct Pixel {
+		utf8_t ch;
+		struct {
+			uint8_t r, g, b, a;
+		} c8;
+	};
 
 	enum class Direction {
 		Up, Right, Down, Left
@@ -113,6 +165,13 @@ void moving_cow(Cow moved)
 
 int main()
 {
+	utf8_t ch = "あ";
+	utf8_t ch2('a');
+	utf8_t ch3 = ch.c_str();
+	utf8_t ch4 = ch3.data;
+	utf8_t ch5 = ch4;
+	printf("Test: %s, %s, %s\n", (const char*)ch, ch2.c_str(), ch3.c_str());
+
 	Cow real(4096);
 	memset(real, 0, real.size_bytes());
 

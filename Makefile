@@ -21,21 +21,29 @@ OPT_FLAGS?= $(addprefix -march=,$(TARGET_CPU)) -fgraphite -fopenmp -floop-parall
 	    -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
 	    -fno-stack-check
 
-CXX_OPT_FLAGS?= $(OPT_FLAGS) -felide-constructors
+CXX_OPT_FLAGS?= $(OPT_FLAGS) 
 
 CFLAGS   += $(COMMON_FLAGS) --std=gnu11
-CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 #-fno-exceptions
+CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 -felide-constructors
 LDFLAGS  +=  
 
 STRIP=strip
 
-RELEASE_CFLAGS?=   -O3 -flto $(OPT_FLAGS)
-RELEASE_CXXFLAGS?= -O3 -flto $(CXX_OPT_FLAGS)
-RELEASE_LDFLAGS?=  -O3 -flto
+ifneq ($(TARGET_SPEC_FLAGS),no)
+	RELEASE_CFLAGS?=   -O3 -flto $(OPT_FLAGS)
+	RELEASE_CXXFLAGS?= -O3 -flto $(CXX_OPT_FLAGS)
+	RELEASE_LDFLAGS?=  -O3 -flto
 
-DEBUG_CFLAGS?=	-O0 -g -DDEBUG
-DEBUG_CXXFLAGS?=-O0 -g -DDEBUG
-DEBUG_LDFLAGS?=
+	DEBUG_CFLAGS?=	-O0 -g
+	DEBUG_CXXFLAGS?=-O0 -g
+	DEBUG_LDFLAGS?=
+endif
+
+DEBUG_CFLAGS+=-DDEBUG
+DEBUG_CXXFLAGS+=-DDEBUG
+
+RELEASE_CFLAGS+=-DRELEASE
+RELEASE_CXXFLAGS+=-DRELEASE
 
 # Objects
 

@@ -3,9 +3,16 @@ Automatic copy-on-write semantic memory slices for use in C (and C++)
 
 # Usage
 See `include/cow.h` for documentation on each function.
+
+## C API 
 Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal non-prototpyed items use the namespace `_cow_` or `_COW_`.
 
+### C++ wrapper API
 The C++ interface defines the type `Cow`, a reference-counted wrapper over `cow_t` instances that supports cloning through its subtype, `Cow::Fake`, and automatically ensures the originally created `cow_t` is not destroyed until all its clones are, as well as the namespace `_cow_util` which contains memory accessor helpers `Span<T>` and `Slice<T>` (aka `Span<T>::Slice`).
+
+There are also the following:
+ * `cow/area.hpp` (namespace `_cow_util`) - The `Area` type is a copy-constructable wrapper around *both* `Cow` and `Cow::Fake`, allowing for implicit cloning.
+ * `cow/slice.hpp` (namespace `_cow_util`) - Contains the definitions for `Span<T>` and `Slice<T>`. Included automatically by `cow.hpp` (*see above*).
 
 ## Building
 Run `make` to build to build the `release` (optimised) target of the library.
@@ -17,6 +24,18 @@ It will create two files: `libcow-debug.a` and `libcow-debug.so`.
 
 Each target compiles both a static and dynamic library. You may need to run `make clean` before switching build targets.
 To build both targets, run `make all`.
+
+To disable default target-specific (e.g. optimisation) flags, set `TARGET_SPEC_FLAGS=no` when running `make`.
+
+Run `sudo make install` to install the libraries (static and dynamic) and header files (C and C++). 
+Run `sudo make uninstall` to remove the libraries and header files.
+
+By default, the install target is `/usr/local/`. Set the `PREFIX` variable when running `make install` / `make uninstall` to specify a different path.
+
+### Full build and installation
+```shell
+$ make && sudo make install
+```
 
 ### Notes
 * The `release` target specifies `-march=native` by default. This may be undesirable, if so, run `make MARCH="" release` instead.

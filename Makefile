@@ -3,7 +3,10 @@
 
 PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
-VERSION=0.1.3
+
+VERSION_MAJOR=0
+VERSION_MINOR=1.4
+VERSION=$(VERSION_MAJOR).$(VERSION_MINOR)
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
@@ -107,43 +110,48 @@ lib$(PROJECT)-debug.a: $(OBJ)
 
 lib$(PROJECT)-release.so: CFLAGS+= $(RELEASE_CFLAGS) -fPIC
 lib$(PROJECT)-release.so: CXXFLAGS += $(RELEASE_CXXFLAGS) -fPIC
-lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS) -Wl,-soname,lib$(PROJECT)-release.so
+lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS)
 lib$(PROJECT)-release.so: $(OBJ)
 	$(CXX) -shared $^ $(CXXFLAGS) -o $@ $(LDFLAGS)
 	$(STRIP) $@
 
 lib$(PROJECT)-debug.so: CFLAGS+= $(DEBUG_CFLAGS) -fPIC
 lib$(PROJECT)-debug.so: CXXFLAGS += $(DEBUG_CXXFLAGS) -fPIC
-lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS) -Wl,-soname,lib$(PROJECT)-debug.so
+lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS)
 lib$(PROJECT)-debug.so: $(OBJ)
 	$(CXX) -shared $^ $(CXXFLAGS) -o $@ $(LDFLAGS)
 
 lib$(PROJECT).a: lib$(PROJECT)-release.a
 	ln -f $< $@
 
+lib$(PROJECT).so: LDFLAGS+= -Wl,-soname,lib$(PROJECT).so.$(VERSION_MAJOR)
 lib$(PROJECT).so: lib$(PROJECT)-release.so
-	ln -f $< $@
+	ln -f $< $@.$(VERSION)
+	ln -sf $@.$(VERSION) $@.$(VERSION_MAJOR)
+	ln -sf $@.$(VERSION_MAJOR) $@
 
 clean-rebuild:
 	rm -rf obj
 
 clean: clean-rebuild
-	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so}
+	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so{,.*}}
 
 install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 lib$(PROJECT).a $(DESTDIR)$(PREFIX)/lib/
-	install -m 755 lib$(PROJECT).so $(DESTDIR)$(PREFIX)/lib/
+	install -s -m 755 lib$(PROJECT).so.$(VERSION) $(DESTDIR)$(PREFIX)/lib/
+	ln -sf lib$(PROJECT).so.$(VERSION) $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).so.$(VERSION_MAJOR)
+	ln -sf lib$(PROJECT).so.$(VERSION_MAJOR) $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).so
 	install -d $(DESTDIR)$(PREFIX)/include/
 	install -m 644 $(wildcard $(INCLUDE)/*.*) $(DESTDIR)$(PREFIX)/include/
 	install -d $(DESTDIR)$(PREFIX)/include/$(PROJECT)/
 	install -m 644 $(wildcard $(INCLUDE)/$(PROJECT)/*.*) $(DESTDIR)$(PREFIX)/include/$(PROJECT)/
 
 uninstall:
-	-rm $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).{a,so}
+	-rm $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).{a,so{,.*}}
 	cd $(INCLUDE) && find . -type f | xargs -I {} rm "$(DESTDIR)$(PREFIX)/include/{}"
 	-rmdir $(DESTDIR)$(PREFIX)/include/$(PROJECT)
 
-$(PROJECT)-cpp-test: lib$(PROJECT).a
+$(PROJECT)-cpp-test: lib$(PROJECT).so
 	g++ -O3 --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$<
 	valgrind ./$@

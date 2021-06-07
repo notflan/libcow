@@ -3,7 +3,7 @@
 
 PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
-VERSION=0.1.0
+VERSION=0.1.1
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
@@ -130,7 +130,7 @@ clean-rebuild:
 clean: clean-rebuild
 	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so}
 
-install: | lib$(PROJECT).a lib$(PROJECT).so
+install:
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 lib$(PROJECT).a $(DESTDIR)$(PREFIX)/lib/
 	install -m 755 lib$(PROJECT).so $(DESTDIR)$(PREFIX)/lib/

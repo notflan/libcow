@@ -1,6 +1,6 @@
 cow-*
 *.a
-*.so
+*.so*
 obj/
 *~
 vgcore.*

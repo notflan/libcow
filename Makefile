@@ -35,7 +35,7 @@ STRIP=strip
 ifneq ($(TARGET_SPEC_FLAGS),no)
 	RELEASE_CFLAGS?=   -O3 -flto $(OPT_FLAGS)
 	RELEASE_CXXFLAGS?= -O3 -flto $(CXX_OPT_FLAGS)
-	RELEASE_LDFLAGS?=  -O3 -flto
+	RELEASE_LDFLAGS?=  -Wl,-O3 -Wl,-flto
 
 	DEBUG_CFLAGS?=	-O0 -g
 	DEBUG_CXXFLAGS?=-O0 -g
@@ -101,12 +101,14 @@ lib$(PROJECT)-release.a: CXXFLAGS += $(RELEASE_CXXFLAGS)
 lib$(PROJECT)-release.a: LDFLAGS += $(RELEASE_LDFLAGS)
 lib$(PROJECT)-release.a: $(OBJ)
 	ar rcs $@ $^
+	ranlib $@
 
 lib$(PROJECT)-debug.a: CFLAGS+= $(DEBUG_CFLAGS)
 lib$(PROJECT)-debug.a: CXXFLAGS += $(DEBUG_CXXFLAGS)
 lib$(PROJECT)-debug.a: LDFLAGS += $(DEBUG_LDFLAGS)
 lib$(PROJECT)-debug.a: $(OBJ)
 	ar rcs $@ $^
+	ranlib $@
 
 lib$(PROJECT)-release.so: CFLAGS+= $(RELEASE_CFLAGS) -fPIC
 lib$(PROJECT)-release.so: CXXFLAGS += $(RELEASE_CXXFLAGS) -fPIC
@@ -153,5 +155,5 @@ uninstall:
 	-rmdir $(DESTDIR)$(PREFIX)/include/$(PROJECT)
 
 $(PROJECT)-cpp-test: lib$(PROJECT).so
-	g++ -O3 --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$<
+	g++ -O3 -flto --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$< -Wl,-flto -Wl,-O3
 	valgrind ./$@

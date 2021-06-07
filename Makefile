@@ -46,23 +46,25 @@ OBJ = $(OBJ_C) $(OBJ_CXX)
 # Phonies
 
 .PHONY: release
-release: | dirs lib$(PROJECT)-release.a
-	-$(MAKE) clean-rebuild
-	-$(MAKE) dirs
-	$(MAKE) lib$(PROJECT)-release.so
+release: | dirs
+	$(MAKE) lib$(PROJECT).a
+	@$(MAKE) clean-rebuild >> /dev/null
+	@$(MAKE) dirs >> /dev/null
+	$(MAKE) lib$(PROJECT).so
 
 .PHONY: debug
-debug: | dirs lib$(PROJECT)-debug.a
-	-$(MAKE) clean-rebuild
-	-$(MAKE) dirs
+debug: | dirs
+	$(MAKE) lib$(PROJECT)-debug.a
+	@$(MAKE) clean-rebuild >> /dev/null
+	@$(MAKE) dirs >> /dev/null
 	$(MAKE) lib$(PROJECT)-debug.so
 
 # Rebuild both release and debug targets from scratch
 .PHONY: all
 all: | clean
-	-$(MAKE) release
-	-$(MAKE) clean-rebuild
-	-$(MAKE) debug
+	@$(MAKE) release
+	@$(MAKE) clean-rebuild
+	@$(MAKE) debug
 
 .PHONY: install
 .PHONY: uninstall
@@ -115,7 +117,7 @@ clean-rebuild:
 clean: clean-rebuild
 	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so}
 
-install: | dirs lib$(PROJECT).a lib$(PROJECT).so
+install: | lib$(PROJECT).a lib$(PROJECT).so
 	install -d $(DESTDIR)$(PREFIX)/lib/
 	install -m 644 lib$(PROJECT).a $(DESTDIR)$(PREFIX)/lib/
 	install -m 755 lib$(PROJECT).so $(DESTDIR)$(PREFIX)/lib/

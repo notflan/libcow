@@ -37,8 +37,15 @@ By default, the install target is `/usr/local/`. Set the `PREFIX` variable when 
 $ make && sudo make install
 ```
 
+Will build with the default optimisation configuration and install the following files/directories:
+ * /usr/local/lib/libcow.a
+ * /usr/local/lib/libcow.so
+ * /usr/local/include/cow.h
+ * /usr/local/include/cow.hpp
+ * /usr/local/include/cow/
+
 ### Notes
-* The `release` target specifies `-march=native` by default. This may be undesirable, if so, run `make MARCH="" release` instead.
+* The `release` target specifies `-march=native` by default. This may be undesirable, if so, set `TARGET_CPU=""` when running `make`.
 * Many optimisation flags for the `release` configuration are specific to GCC (with graphite enabled by default), if builds on other compilers (or non-graphite enabled GCC builds) complain, either set the `OPT_FLAGS` env var or remove the problem flags from the Makefile.
 * `release` builds are stripped by default. run `make STRIP=: release` to prevent stripping.
 * The targets are all built with `-fno-strict-aliasing`, but functions in the header file are still annotated with `restrict` needed. This is just to inform users that the function will assume the pointer is not aliased. (When included in C++, where `restrict` is not a keyword, we temporarily define it to be `__restrict__`, which is the GCC equivalent for C++).

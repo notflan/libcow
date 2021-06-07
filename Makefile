@@ -3,16 +3,21 @@
 
 PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
+VERSION=0.0.0
+
+ifeq ($(PREFIX),)
+	PREFIX := /usr/local
+endif
 
 SRC_C   = $(wildcard src/*.c)
 SRC_CXX = $(wildcard src/*.cpp)
 
 INCLUDE=include
 
-COMMON_FLAGS= -W -Wall -pedantic -fno-strict-aliasing $(addprefix -I,$(INCLUDE))
+COMMON_FLAGS= -W -Wall -Wextra -Wstrict-aliasing -pedantic -fno-strict-aliasing "-DVERSION=$(VERSION)" $(addprefix -I,$(INCLUDE))
 
-MARCH?=native
-OPT_FLAGS?= $(addprefix -march=,$(MARCH)) -fgraphite -fopenmp -floop-parallelize-all -ftree-parallelize-loops=4 \
+TARGET_CPU?=native
+OPT_FLAGS?= $(addprefix -march=,$(TARGET_CPU)) -fgraphite -fopenmp -floop-parallelize-all -ftree-parallelize-loops=4 \
 	    -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
 	    -fno-stack-check
 
@@ -59,6 +64,9 @@ all: | clean
 	-$(MAKE) clean-rebuild
 	-$(MAKE) debug
 
+.PHONY: install
+.PHONY: uninstall
+
 # Targets
 
 dirs:
@@ -75,7 +83,6 @@ lib$(PROJECT)-release.a: CXXFLAGS += $(RELEASE_CXXFLAGS)
 lib$(PROJECT)-release.a: LDFLAGS += $(RELEASE_LDFLAGS)
 lib$(PROJECT)-release.a: $(OBJ)
 	ar rcs $@ $^
-	ln -sf $@ lib$(PROJECT).a
 
 lib$(PROJECT)-debug.a: CFLAGS+= $(DEBUG_CFLAGS)
 lib$(PROJECT)-debug.a: CXXFLAGS += $(DEBUG_CXXFLAGS)
@@ -89,7 +96,6 @@ lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS)
 lib$(PROJECT)-release.so: $(OBJ)
 	$(CXX) -shared $^ -o $@
 	$(STRIP) $@
-	ln -sf $@ lib$(PROJECT).so
 
 lib$(PROJECT)-debug.so: CFLAGS+= $(DEBUG_CFLAGS) -fPIC
 lib$(PROJECT)-debug.so: CXXFLAGS += $(DEBUG_CXXFLAGS) -fPIC
@@ -97,9 +103,28 @@ lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS)
 lib$(PROJECT)-debug.so: $(OBJ)
 	$(CXX) -shared $^ -o $@
 
+lib$(PROJECT).a: lib$(PROJECT)-release.a
+	ln -f $< $@
+
+lib$(PROJECT).so: lib$(PROJECT)-release.so
+	ln -f $< $@
+
 clean-rebuild:
 	rm -rf obj
 
 clean: clean-rebuild
 	rm -f lib$(PROJECT){,-{release,debug,pgo}}.{a,so}
 
+install: | dirs lib$(PROJECT).a lib$(PROJECT).so
+	install -d $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 lib$(PROJECT).a $(DESTDIR)$(PREFIX)/lib/
+	install -m 755 lib$(PROJECT).so $(DESTDIR)$(PREFIX)/lib/
+	install -d $(DESTDIR)$(PREFIX)/include/
+	install -m 644 $(wildcard $(INCLUDE)/*.*) $(DESTDIR)$(PREFIX)/include/
+	install -d $(DESTDIR)$(PREFIX)/include/$(PROJECT)/
+	install -m 644 $(wildcard $(INCLUDE)/$(PROJECT)/*.*) $(DESTDIR)$(PREFIX)/include/$(PROJECT)/
+
+uninstall:
+	-rm $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).{a,so}
+	cd $(INCLUDE) && find . -type f | xargs -I {} rm "$(DESTDIR)$(PREFIX)/include/{}"
+	-rmdir $(DESTDIR)$(PREFIX)/include/$(PROJECT)

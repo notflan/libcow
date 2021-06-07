@@ -54,5 +54,4 @@ Cow::Fake Cow::Fake::Fake::from_real(const Cow& real) { return Fake(real); }
 Cow::Fake Cow::Fake::clone() const { return Fake(*static_cast<const Fake*>(this)); }
 cow_t* Cow::Fake::get_raw() const { return fake; }
 
-// Operators
 

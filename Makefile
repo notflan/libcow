@@ -3,7 +3,7 @@
 
 PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
-VERSION=0.1.2
+VERSION=0.1.3
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local
@@ -25,7 +25,7 @@ CXX_OPT_FLAGS?= $(OPT_FLAGS)
 
 CFLAGS   += $(COMMON_FLAGS) --std=gnu11
 CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 -felide-constructors
-LDFLAGS  +=  
+LDFLAGS  += 
 
 STRIP=strip
 
@@ -107,16 +107,16 @@ lib$(PROJECT)-debug.a: $(OBJ)
 
 lib$(PROJECT)-release.so: CFLAGS+= $(RELEASE_CFLAGS) -fPIC
 lib$(PROJECT)-release.so: CXXFLAGS += $(RELEASE_CXXFLAGS) -fPIC
-lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS)
+lib$(PROJECT)-release.so: LDFLAGS += $(RELEASE_LDFLAGS) -Wl,-soname,lib$(PROJECT)-release.so
 lib$(PROJECT)-release.so: $(OBJ)
-	$(CXX) -shared $^ -o $@
+	$(CXX) -shared $^ $(CXXFLAGS) -o $@ $(LDFLAGS)
 	$(STRIP) $@
 
 lib$(PROJECT)-debug.so: CFLAGS+= $(DEBUG_CFLAGS) -fPIC
 lib$(PROJECT)-debug.so: CXXFLAGS += $(DEBUG_CXXFLAGS) -fPIC
-lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS)
+lib$(PROJECT)-debug.so: LDFLAGS += $(DEBUG_LDFLAGS) -Wl,-soname,lib$(PROJECT)-debug.so
 lib$(PROJECT)-debug.so: $(OBJ)
-	$(CXX) -shared $^ -o $@
+	$(CXX) -shared $^ $(CXXFLAGS) -o $@ $(LDFLAGS)
 
 lib$(PROJECT).a: lib$(PROJECT)-release.a
 	ln -f $< $@

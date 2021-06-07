@@ -3,7 +3,7 @@
 
 PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
-VERSION=0.1.1
+VERSION=0.1.2
 
 ifeq ($(PREFIX),)
 	PREFIX := /usr/local

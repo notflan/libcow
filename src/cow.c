@@ -67,7 +67,7 @@ static inline int shm_fd(size_t size)
 	int fd = memfd_create("cow_create:shm_fd", 0);
 #endif
 	if(fd<=0) die("cow_create:shm_fd:memfd_create");
-	ftruncate(fd, size);
+	if(ftruncate(fd, size) != 0) die("cow_create:shm_fd:ftruncate");
 	return fd;
 }
 

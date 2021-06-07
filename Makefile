@@ -21,21 +21,29 @@ OPT_FLAGS?= $(addprefix -march=,$(TARGET_CPU)) -fgraphite -fopenmp -floop-parall
 	    -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block \
 	    -fno-stack-check
 
-CXX_OPT_FLAGS?= $(OPT_FLAGS) -felide-constructors
+CXX_OPT_FLAGS?= $(OPT_FLAGS) 
 
 CFLAGS   += $(COMMON_FLAGS) --std=gnu11
-CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 #-fno-exceptions
+CXXFLAGS += $(COMMON_FLAGS) --std=gnu++20 -felide-constructors
 LDFLAGS  +=  
 
 STRIP=strip
 
-RELEASE_CFLAGS?=   -O3 -flto $(OPT_FLAGS)
-RELEASE_CXXFLAGS?= -O3 -flto $(CXX_OPT_FLAGS)
-RELEASE_LDFLAGS?=  -O3 -flto
+ifneq ($(TARGET_SPEC_FLAGS),no)
+	RELEASE_CFLAGS?=   -O3 -flto $(OPT_FLAGS)
+	RELEASE_CXXFLAGS?= -O3 -flto $(CXX_OPT_FLAGS)
+	RELEASE_LDFLAGS?=  -O3 -flto
 
-DEBUG_CFLAGS?=	-O0 -g -DDEBUG
-DEBUG_CXXFLAGS?=-O0 -g -DDEBUG
-DEBUG_LDFLAGS?=
+	DEBUG_CFLAGS?=	-O0 -g
+	DEBUG_CXXFLAGS?=-O0 -g
+	DEBUG_LDFLAGS?=
+endif
+
+DEBUG_CFLAGS+=-DDEBUG
+DEBUG_CXXFLAGS+=-DDEBUG
+
+RELEASE_CFLAGS+=-DRELEASE
+RELEASE_CXXFLAGS+=-DRELEASE
 
 # Objects
 
@@ -68,6 +76,11 @@ all: | clean
 
 .PHONY: install
 .PHONY: uninstall
+
+.PHONY: test
+test:
+	@rm -f $(PROJECT)-cpp-test
+	@$(MAKE) $(PROJECT)-cpp-test
 
 # Targets
 
@@ -130,3 +143,7 @@ uninstall:
 	-rm $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).{a,so}
 	cd $(INCLUDE) && find . -type f | xargs -I {} rm "$(DESTDIR)$(PREFIX)/include/{}"
 	-rmdir $(DESTDIR)$(PREFIX)/include/$(PROJECT)
+
+$(PROJECT)-cpp-test: lib$(PROJECT).a
+	g++ -O3 --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$<
+	valgrind ./$@

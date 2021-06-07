@@ -3,7 +3,16 @@ Automatic copy-on-write semantic memory slices for use in C (and C++)
 
 # Usage
 See `include/cow.h` for documentation on each function.
-Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`.
+
+## C API 
+Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal non-prototpyed items use the namespace `_cow_` or `_COW_`.
+
+### C++ wrapper API
+The C++ interface defines the type `Cow`, a reference-counted wrapper over `cow_t` instances that supports cloning through its subtype, `Cow::Fake`, and automatically ensures the originally created `cow_t` is not destroyed until all its clones are, as well as the namespace `_cow_util` which contains memory accessor helpers `Span<T>` and `Slice<T>` (aka `Span<T>::Slice`).
+
+There are also the following:
+ * `cow/area.hpp` (namespace `_cow_util`) - The `Area` type is a copy-constructable wrapper around *both* `Cow` and `Cow::Fake`, allowing for implicit cloning.
+ * `cow/slice.hpp` (namespace `_cow_util`) - Contains the definitions for `Span<T>` and `Slice<T>`. Included automatically by `cow.hpp` (*see above*).
 
 ## Building
 Run `make` to build to build the `release` (optimised) target of the library.
@@ -16,8 +25,27 @@ It will create two files: `libcow-debug.a` and `libcow-debug.so`.
 Each target compiles both a static and dynamic library. You may need to run `make clean` before switching build targets.
 To build both targets, run `make all`.
 
+To disable default target-specific (e.g. optimisation) flags, set `TARGET_SPEC_FLAGS=no` when running `make`.
+
+Run `sudo make install` to install the libraries (static and dynamic) and header files (C and C++). 
+Run `sudo make uninstall` to remove the libraries and header files.
+
+By default, the install target is `/usr/local/`. Set the `PREFIX` variable when running `make install` / `make uninstall` to specify a different path.
+
+### Full build and installation
+```shell
+$ make && sudo make install
+```
+
+Will build with the default optimisation configuration and install the following files/directories:
+ * /usr/local/lib/libcow.a
+ * /usr/local/lib/libcow.so
+ * /usr/local/include/cow.h
+ * /usr/local/include/cow.hpp
+ * /usr/local/include/cow/
+
 ### Notes
-* The `release` target specifies `-march=native` by default. This may be undesirable, if so, run `make MARCH="" release` instead.
+* The `release` target specifies `-march=native` by default. This may be undesirable, if so, set `TARGET_CPU=""` when running `make`.
 * Many optimisation flags for the `release` configuration are specific to GCC (with graphite enabled by default), if builds on other compilers (or non-graphite enabled GCC builds) complain, either set the `OPT_FLAGS` env var or remove the problem flags from the Makefile.
 * `release` builds are stripped by default. run `make STRIP=: release` to prevent stripping.
 * The targets are all built with `-fno-strict-aliasing`, but functions in the header file are still annotated with `restrict` needed. This is just to inform users that the function will assume the pointer is not aliased. (When included in C++, where `restrict` is not a keyword, we temporarily define it to be `__restrict__`, which is the GCC equivalent for C++).

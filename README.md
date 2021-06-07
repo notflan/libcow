@@ -1,11 +1,12 @@
 # libcow
-Automatic copy-on-write semantic memory slices for use in C (and C++)
+Automatic copy-on-write semantic memory slices library for use in C and C++.
 
 # Usage
 See `include/cow.h` for documentation on each function.
+See `include/cow.hpp` for the C++ wrapper API class.
 
 ## C API 
-Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal non-prototpyed items use the namespace `_cow_` or `_COW_`.
+Each function, macro, and type definition in the header will be prefixed with `cow_` or `COW_`. Internal and/or non-prototpyed items use the namespace `_cow_` or `_COW_`.
 
 ### C++ wrapper API
 The C++ interface defines the type `Cow`, a reference-counted wrapper over `cow_t` instances that supports cloning through its subtype, `Cow::Fake`, and automatically ensures the originally created `cow_t` is not destroyed until all its clones are, as well as the namespace `_cow_util` which contains memory accessor helpers `Span<T>` and `Slice<T>` (aka `Span<T>::Slice`).
@@ -16,11 +17,11 @@ There are also the following:
 
 ## Building
 Run `make` to build to build the `release` (optimised) target of the library.
-It will create four files: `libcow-release.a`, `libcow-release.so`, `libcow.a`, and `libcow.so`.
-The latter two are just symlinks to the former two.
+It will create four files: `libcow-release.a`, `libcow-release.so`, `libcow.a`, and `libcow.so` (wish `SONAME` versioned symlinks).
+The latter two are hardlinked to the former two.
 
 Run `make debug` to build the debug target, which disables optimisations and includes trace messages.
-It will create two files: `libcow-debug.a` and `libcow-debug.so`.
+It will create two files: `libcow-debug.a` and `libcow-debug.so`. The debug target `.so` does not include a `SONAME`, nor does it produce the versioning symlinks (unless you manually set `LDFLAGS="-Wl,-soname,libcow.so.<version>"` and create the symlinks afterwards.)
 
 Each target compiles both a static and dynamic library. You may need to run `make clean` before switching build targets.
 To build both targets, run `make all`.
@@ -32,29 +33,29 @@ Run `sudo make uninstall` to remove the libraries and header files.
 
 By default, the install target is `/usr/local/`. Set the `PREFIX` variable when running `make install` / `make uninstall` to specify a different path.
 
-### Full build and installation
+## Installing
+To build and install with the default configuration.
 ```shell
 $ make && sudo make install
 ```
 
-Will build with the default optimisation configuration and install the following files/directories:
+Will build with the default optimisations enabled and install the following files/directories:
  * /usr/local/lib/libcow.a
- * /usr/local/lib/libcow.so
+ * /usr/local/lib/libcow.so (with `SONAME` versioned symlinks)
  * /usr/local/include/cow.h
  * /usr/local/include/cow.hpp
  * /usr/local/include/cow/
 
-### Notes
+## Notes
 * The `release` target specifies `-march=native` by default. This may be undesirable, if so, set `TARGET_CPU=""` when running `make`.
 * Many optimisation flags for the `release` configuration are specific to GCC (with graphite enabled by default), if builds on other compilers (or non-graphite enabled GCC builds) complain, either set the `OPT_FLAGS` env var or remove the problem flags from the Makefile.
 * `release` builds are stripped by default. run `make STRIP=: release` to prevent stripping.
 * The targets are all built with `-fno-strict-aliasing`, but functions in the header file are still annotated with `restrict` needed. This is just to inform users that the function will assume the pointer is not aliased. (When included in C++, where `restrict` is not a keyword, we temporarily define it to be `__restrict__`, which is the GCC equivalent for C++).
+* The `debug` target `.so` does not include a `SONAME`, nor does it produce the output symlinks expected of a `SONAME`. The `release` target does. The version is specified in the Makefile.
 
 ## Using
 Link to either `libcow.a` or `libcow.so` (or the debug target libraries), and include the header `include/cow.h` to your project to use this library.
-The header should work in C++ projects as well.
-
-
+The header should work in C++ projects as well, but there is a C++-specific wrapper API in `include/cow.hpp` which you can use instead for automatic handling of resources (*see above*).
 
 # Requirements
 Relying on the `memfd_create()` syscall, Linux >=3.17 and glibc >=2.27 (or equivalent) are required for build.
@@ -98,6 +99,52 @@ Real: Hello world
 Fake: Hello fake!
 ```
 Notice the first read of `fake` contains the data written to `origin`. And that the write of `Hello fake!` caused only `fake` to be updated, not `origin`.
+
+## C++ API example
+
+``` c++
+#include <cow.hpp>
+
+#include <cstring>
+#include <cstdio>
+
+void write_cow(Cow& to, const char* string)
+{
+  strncpy(to.area_as<char>(), string, to.size()-1);
+}
+
+void read_cow(const Cow& from)
+{
+  printf("Cow says: %s\n", from.area_as<char>());
+}
+
+int main()
+{
+  Cow area(1024);
+  write_cow(area, "Initial state");
+  
+  Cow::Fake clone = area;
+  
+  read_cow(clone);
+  write_cow(clone, "Cloned state");
+
+  read_cow(clone);
+  read_cow(area);
+  
+  return 0;
+}
+
+```
+Will print:
+
+``` shell
+$ ./test
+Cow says: Initial state
+Cow says: Cloned state
+Cow says: Initial state
+```
+
+The `Cow` class and its subclass `Cow::Fake` handles freeing resources automatically. Alternatively, there is the `Area` class which can act as both (see `cow/area.hpp`).
 
 ## What is happening here?
 The cloned slice, `fake`, which is created from `origin` with the `cow_clone()` function will contain all the information within `origin`. 

@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include <cow/area.hpp>
+
 using namespace _cow_util;
 
 /// UTF8 multibyte 4.
@@ -35,7 +37,7 @@ struct utf8_t {
 	}
 
 	constexpr inline utf8_t(const char* c) {
-		for(int i=0;i<MULTIBYTE && (data[i] = c[i]); i++) (void)0;	
+		for(size_t i=0;i<MULTIBYTE && (data[i] = c[i]); i++) (void)0;	
 	}
 
 	constexpr inline utf8_t(const Unicode& data) : data(data) {}
@@ -52,6 +54,7 @@ struct utf8_t {
 
 	Unicode data;
 };
+
 
 namespace Tiling {
 	struct Map;
@@ -138,6 +141,8 @@ namespace Tiling {
 	};
 }
 
+
+
 template<typename T = unsigned char>
 void print_slice(Slice<T> memory)
 {
@@ -165,11 +170,23 @@ void moving_cow(Cow moved)
 
 int main()
 {
+	Area area(4000);
+	write_fake(area, "Hello???");
+	Area area2 = area;
+	write_fake(area2, "Hi");
+	Area area3 = std::move(area2);
+	Area area4 = std::move(area);
+	read_fake(area3);
+	read_fake(area4);
+
+	printf("Is clone: a1: %d, a2: %d\n", area4.is_clone(), area3.is_clone());
+
 	utf8_t ch = "あ";
 	utf8_t ch2('a');
 	utf8_t ch3 = ch.c_str();
 	utf8_t ch4 = ch3.data;
 	utf8_t ch5 = ch4;
+	(void)ch5;
 	printf("Test: %s, %s, %s\n", (const char*)ch, ch2.c_str(), ch3.c_str());
 
 	Cow real(4096);

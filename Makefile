@@ -69,6 +69,11 @@ all: | clean
 .PHONY: install
 .PHONY: uninstall
 
+.PHONY: test
+test:
+	@rm -f $(PROJECT)-cpp-test
+	@$(MAKE) $(PROJECT)-cpp-test
+
 # Targets
 
 dirs:
@@ -130,3 +135,7 @@ uninstall:
 	-rm $(DESTDIR)$(PREFIX)/lib/lib$(PROJECT).{a,so}
 	cd $(INCLUDE) && find . -type f | xargs -I {} rm "$(DESTDIR)$(PREFIX)/include/{}"
 	-rmdir $(DESTDIR)$(PREFIX)/include/$(PROJECT)
+
+$(PROJECT)-cpp-test: lib$(PROJECT).a
+	g++ -O3 --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$<
+	valgrind ./$@

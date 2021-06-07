@@ -10,7 +10,7 @@ struct Cow : public _cow_util::Span<unsigned char> {
 	struct Fake;
 	Cow() = delete;
 
-	Cow(size_t size);
+	explicit Cow(size_t size);
 	Cow(Cow&& m);
 	virtual ~Cow();
 
@@ -34,6 +34,8 @@ struct Cow : public _cow_util::Span<unsigned char> {
 	
 	static Cow from_raw(cow_t* owned);
 
+	virtual cow_t* raw() const;
+
 	private:
 	struct _inner;
 	Cow(cow_t* raw);
@@ -55,6 +57,8 @@ struct Cow::Fake : public Cow {
 	Fake clone() const override;
 
 	static Fake from_real(const Cow& real);
+
+	inline cow_t* raw() const override { return fake; }
 
 	protected:
 	cow_t* get_raw() const override;

@@ -170,7 +170,9 @@ void moving_cow(Cow moved)
 
 int main()
 {
-	Area area(4000);
+	Cow _area(4000);
+
+	Area area = std::move(_area);
 	write_fake(area, "Hello???");
 	Area area2 = area;
 	write_fake(area2, "Hi");

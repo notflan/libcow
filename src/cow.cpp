@@ -41,6 +41,8 @@ cow_t* Cow::get_raw() const { return super->ptr(); }
 
 size_t Cow::size() const { return super->cow.size; }
 
+cow_t* Cow::raw() const { return &super->cow; }
+
 Cow::Fake::Fake(const Cow& copy) : Cow(copy), fake(cow_clone(copy.super->ptr())){}
 Cow::Fake::Fake(const Fake& copy) : Cow(copy), fake(cow_clone(copy.fake)){}//Fake(*static_cast<const Cow*>(&copy)){}
 Cow::Fake::Fake(Fake&& move) : Cow(std::move(move)), fake(move.fake)

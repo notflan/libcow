@@ -7,9 +7,14 @@
 #include <cow.hpp>
 
 struct Area {
-	Area(size_t sz);
+	Area() = delete;
+	
+	explicit Area(size_t sz);
 	Area(const Area& area);
 	Area(Area&& area);
+
+	Area(Cow&& move);
+	explicit Area(const Cow& copy);
 
 	inline const Cow* operator->() const { return _area.get(); }
 	inline Cow* operator->() { return _area.get(); }
@@ -21,6 +26,8 @@ struct Area {
 	inline operator Cow&() { return *_area.get(); }
 
 	inline bool is_clone() const { return dynamic_cast<Cow::Fake*>(_area.get()) != nullptr; }
+
+	inline cow_t* raw() const { return _area->raw(); }
 
 	~Area();
 	private:

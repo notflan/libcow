@@ -16,8 +16,14 @@ struct Cow : public _cow_util::Span<unsigned char> {
 
 	virtual Fake clone() const;
 
-	inline void* area() override { return cow_ptr(get_raw()); }
-	inline const void* area() const override { return cow_ptr_of(const void, get_raw()); }
+	inline void* area() override { 
+		auto raw = get_raw();
+		return raw ? cow_ptr(raw) : nullptr;
+	}
+	inline const void* area() const override { 
+		auto raw = get_raw();
+		return raw ? cow_ptr_of(const void, raw) : nullptr;
+	}
 
 	/// Get the size of the mapped area.
 	///

@@ -37,11 +37,11 @@ Cow::~Cow(){}
 Cow Cow::from_raw(cow_t* owned) { if(cow_is_fake(owned)) throw "Trying to create real from fake raw"; else return Cow(owned); }
 
 Cow::Fake Cow::clone() const { return Fake::from_real(*this); }
-cow_t* Cow::get_raw() const { return super->ptr(); }
+cow_t* Cow::get_raw() const { return super ? super->ptr() : nullptr; }
 
-size_t Cow::size() const { return super->cow.size; }
+size_t Cow::size() const { return super ? super->cow.size : 0; }
 
-cow_t* Cow::raw() const { return &super->cow; }
+cow_t* Cow::raw() const { return super ? &super->cow : nullptr; }
 
 Cow::Fake::Fake(const Cow& copy) : Cow(copy), fake(cow_clone(copy.super->ptr())){}
 Cow::Fake::Fake(const Fake& copy) : Cow(copy), fake(cow_clone(copy.fake)){}//Fake(*static_cast<const Cow*>(&copy)){}

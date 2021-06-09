@@ -20,9 +20,6 @@ struct cow_mapped_slice {
 
 	size_t size; // Should be at this offset.
 	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
-
-	// Error status
-	union poison error;
 }; // cow_t, *cow
 
 #ifdef __cplusplus

@@ -8,7 +8,7 @@ extern "C" {
 
 #include <stdlib.h>
 
-enum cow_err {
+enum cow_err_kind {
 	COW_ERR_UNKNOWN =0,
 	COW_ERR_NONE =1, // Success
 
@@ -43,7 +43,7 @@ static inline
 #ifdef _COW_NO_ASSUME_ABI
 #define _cow_size_unsafe(v) cow_size(v)
 #else
-// XXX: This macro is *VERY* ABI sensitive. This shouldn't be used if the ABI has changed since the build of libcow's `cow_t.h` passed its static assertions in *both* the C and C++ implementations.
+// XXX: This macro is *VERY* ABI sensitive. This shouldn't be used if the ABI has changed since the build of libcow's `cow_t.h` passed its stati assertions in *both* the C and C++ implementations.
 // The C++ API uses this by default for its `Cow::size()` function.
 #define _cow_size_unsafe(v) (*(((size_t*)(v))+1))
 	__attribute__((deprecated("size() is safer and offers better codegen."))) 

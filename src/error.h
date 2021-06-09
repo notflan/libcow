@@ -12,6 +12,8 @@ extern "C" {
 #define restrict __restrict__
 #endif
 
+/*
+Failed:
 typedef struct cow_error cow_error;
 union poison {
 	struct cow_error {
@@ -31,6 +33,7 @@ union poison {
 
 void _cow_poison(cow_t* restrict cow, enum cow_err kind, const char *msg) internal;
 void _cow_poison_ref(cow_t* restrict cow, cow_error* globl) internal;
+*/
 
 #ifdef __cplusplus
 }

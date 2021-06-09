@@ -33,6 +33,7 @@
 
 // struct cow { ... }
 #include "cow_t.h"
+#include "error.h"
 
 static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold)) void die(const char* error)
 {
@@ -48,6 +49,8 @@ static __attribute__((noreturn)) __attribute__((noinline)) __attribute__((cold))
 static inline cow_t* box_value(cow_t v)
 {
 	cow_t* boxed = box(cow_t);
+	LASSERT(boxed != NULL, "aligned_alloc() returned `NULL` for `cow_t`");
+
 	TRACE("boxing cow_t { origin = %p, fd = 0x%x, size = %lu } -> %p (%lu bytes)", v.origin, v.fd, v.size, (const void*)boxed, sizeof(cow_t));
 	*boxed = v;
 
@@ -89,6 +92,7 @@ size_t cow_size(const cow_t* cow)
 inline internal cow_t _cow_create_unboxed(size_t size)
 {
 	cow_t ret;
+	ret.error = COW_POISON_NONE;
 	ret.size = size;
 	ret.fd = shm_fd(size);
 	ret.origin = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, ret.fd, 0);
@@ -120,6 +124,7 @@ cow_t* cow_clone(const cow_t* cow)
 {
 	cow_t clone;
 
+	clone.error = COW_POISON_NONE;
 	clone.origin = mmap(cow->origin, cow->size, PROT_READ|PROT_WRITE, MAP_PRIVATE, cow_real_fd(cow), 0);
 	if(clone.origin == MAP_FAILED) die("cow_clone:mmap");
 	clone.fd = (~INT_MAX) | cow->fd;

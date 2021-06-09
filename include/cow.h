@@ -8,6 +8,18 @@ extern "C" {
 
 #include <stdlib.h>
 
+enum cow_err {
+	COW_ERR_UNKNOWN =0,
+	COW_ERR_NONE =1, // Success
+
+	/// `memfd_create()` failed.
+	COW_ERR_FDCREATE,
+	/// `ftruncate()` (set size) failed.
+	COW_ERR_SIZE,
+	/// `mmap()` failed.
+	COW_ERR_MAP,
+};
+
 // Copy-on-write mapped memory.
 typedef struct cow_mapped_slice cow_t;
 

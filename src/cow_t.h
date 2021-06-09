@@ -2,7 +2,6 @@
 #ifndef _COW_T_H
 #define _COW_T_H
 
-#define internal __attribute__((visibility("internal")))
 
 #ifdef __cplusplus
 #define restrict __restrict__
@@ -11,13 +10,19 @@ extern "C" {
 
 #include <stdlib.h>
 
+#include "macros.h"
 #include <cow.h>
+
+#include "error.h"
 
 struct cow_mapped_slice {
 	void* origin; // ptr to mapped memory. This *MUST* be the first field and have an offset of 0.
 
 	size_t size; // Should be at this offset.
 	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
+
+	// Error status
+	union poison error;
 }; // cow_t, *cow
 
 #ifdef __cplusplus

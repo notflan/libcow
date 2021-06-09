@@ -72,3 +72,10 @@ struct Cow::Fake : public Cow {
 
 	cow_t* const fake;
 };
+
+//TODO
+template<typename T>
+struct TypedCow : private Cow, public _cow_util::Span<T> {
+	struct Fake : private Cow::Fake, public _cow_util::Span<T>{};
+};
+

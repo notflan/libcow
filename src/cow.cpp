@@ -2,11 +2,14 @@
 
 #include <utility>
 
+#include "macros.h"
 #include "cow_t.h"
+
 
 struct Cow::_inner {
 	cow_t cow;
 
+	// NOTE: We can assume cow isn't poisoned here, since the constructors throw if it is.
 	inline const cow_t* ptr() const { return &cow; }
 	inline cow_t* ptr() { return &cow; }
 
@@ -19,11 +22,18 @@ struct Cow::_inner {
 	_inner() = delete;
 };
 Cow::_inner::~_inner() {
+	if(UNLIKELY(cow.poisoned)) return;
+
 	_cow_free_unboxed(ptr());
+	cow.poisoned=true;
 }
-Cow::_inner::_inner(size_t sz) : cow(_cow_create_unboxed(sz)){}
+Cow::_inner::_inner(size_t sz) : cow(_cow_create_unboxed(sz)){
+	//TODO: Real exception type?
+	if(UNLIKELY(cow.poisoned)) throw "POISONED";
+}
 Cow::_inner::_inner(cow_t* ptr) : cow(*ptr)
 {
+	if(UNLIKELY(cow.poisoned)) throw "POISONED";
 	free(ptr);
 }
 

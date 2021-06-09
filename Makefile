@@ -5,7 +5,7 @@ PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
 
 VERSION_MAJOR=0
-VERSION_MINOR=1.5
+VERSION_MINOR=2.0r0
 VERSION=$(VERSION_MAJOR).$(VERSION_MINOR)
 
 ifeq ($(PREFIX),)
@@ -156,4 +156,4 @@ uninstall:
 
 $(PROJECT)-cpp-test: lib$(PROJECT).so
 	g++ -O3 -flto --std=gnu++20 -Iinclude/ -g -Wall -Wextra src/test/*.cpp -o $@ -l:$< -Wl,-flto -Wl,-O3
-	valgrind ./$@
+	-valgrind ./$@

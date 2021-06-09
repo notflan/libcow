@@ -18,7 +18,13 @@ enum cow_err_kind {
 	COW_ERR_SIZE,
 	/// `mmap()` failed.
 	COW_ERR_MAP,
+
+	_COW_ERR_SIZE,
 };
+// Message string corresponding to this error.
+const char* const * cow_err_msg(enum cow_err_kind kind);
+// The last error that `libcow` produced on this thread.
+enum cow_err_kind cow_err();
 
 // Copy-on-write mapped memory.
 typedef struct cow_mapped_slice cow_t;

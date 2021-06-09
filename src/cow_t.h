@@ -6,6 +6,8 @@
 #ifdef __cplusplus
 #define restrict __restrict__
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 #include <stdlib.h>
@@ -20,6 +22,10 @@ struct cow_mapped_slice {
 
 	size_t size; // Should be at this offset.
 	int fd; // Will be ORd with ~INT_MAX if it's a clone. Will be >0 if it's the original.
+
+	// For unboxed cow_ts. If there was an error constructing, it will be set to `true`.
+	// If this is true. All resources held by this object will have been freed already.
+	bool poisoned;
 }; // cow_t, *cow
 
 #ifdef __cplusplus

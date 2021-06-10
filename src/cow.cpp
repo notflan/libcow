@@ -28,13 +28,13 @@ Cow::_inner::~_inner() {
 	cow.poisoned=true;
 }
 Cow::_inner::_inner(size_t sz) : cow(_cow_create_unboxed(sz)){
-	//TODO: Real exception type?
+	
 	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 }
 Cow::_inner::_inner(cow_t* ptr) : cow(*ptr)
 {
-	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 	free(ptr);
+	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 }
 
 Cow::Cow(size_t size) : super(std::make_shared<_inner>(size)){}

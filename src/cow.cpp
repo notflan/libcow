@@ -29,11 +29,11 @@ Cow::_inner::~_inner() {
 }
 Cow::_inner::_inner(size_t sz) : cow(_cow_create_unboxed(sz)){
 	//TODO: Real exception type?
-	if(UNLIKELY(cow.poisoned)) throw "POISONED";
+	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 }
 Cow::_inner::_inner(cow_t* ptr) : cow(*ptr)
 {
-	if(UNLIKELY(cow.poisoned)) throw "POISONED";
+	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 	free(ptr);
 }
 
@@ -66,4 +66,10 @@ Cow::Fake Cow::Fake::Fake::from_real(const Cow& real) { return Fake(real); }
 Cow::Fake Cow::Fake::clone() const { return Fake(*static_cast<const Fake*>(this)); }
 cow_t* Cow::Fake::get_raw() const { return fake; }
 
+// Error
 
+const char* CowException::what() const noexcept { 
+	auto str = cow_err_msg(kind); 
+	if(str && *str) return *str;
+	else return "Unknown error";
+}

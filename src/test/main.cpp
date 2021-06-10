@@ -217,9 +217,12 @@ int main()
 	read_fake(clone); //clone still functions because of refcount on origin.
 
 	printf("Last error: %d, %s\n", cow_err(), *cow_err_msg(cow_err()));
-	Cow should_fail(SIZE_MAX);
-	printf("Last error: %d, %s\n", cow_err(), *cow_err_msg(cow_err()));
-	Cow::Fake should_fail_clone = should_fail;
+	try {
+		Cow should_fail(SIZE_MAX);
+		Cow::Fake should_fail_clone = should_fail;
+	} catch (CowException& cw) {
+		printf("Error! (%d) %s\n", cw.kind, cw.what());
+	}
 	printf("Last error: %d, %s\n", cow_err(), *cow_err_msg(cow_err()));
 	return 0;
 }

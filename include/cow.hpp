@@ -3,8 +3,19 @@
 #include "cow.h"
 
 #include <memory>
+#include <exception>
 
 #include "cow/slice.hpp"
+
+struct CowException : public std::exception
+{
+	inline CowException(cow_err_kind k) : kind(k){}
+
+	const char* what() const noexcept override;
+	inline ~CowException(){}
+
+	const cow_err_kind kind;
+};
 
 struct Cow : public _cow_util::Span<unsigned char> {
 	struct Fake;

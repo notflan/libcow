@@ -18,6 +18,8 @@ enum cow_err_kind {
 	COW_ERR_SIZE,
 	/// `mmap()` failed.
 	COW_ERR_MAP,
+	/// Trying to use a poisoned cow
+	COW_ERR_POISONED,
 
 	_COW_ERR_SIZE,
 };

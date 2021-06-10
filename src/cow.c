@@ -122,7 +122,9 @@ void cow_free(cow_t* restrict cow)
 cow_t* cow_clone(const cow_t* cow)
 {
 	if(UNLIKELY(cow->poisoned)) {
+		_cow_set_err(COW_ERR_POISONED);
 		TRACE("WARNING: attempted to clone poisoned object at %p", (const void*)cow);
+	
 		return NULL;
 	}
 	cow_t clone;

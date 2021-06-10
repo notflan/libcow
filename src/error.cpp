@@ -21,6 +21,7 @@ namespace _cow_error {
 		setmsg(ret, COW_ERR_FDCREATE, "failed to create shmfd (memfd_create())");
 		setmsg(ret, COW_ERR_SIZE, "failed to set shmfd size (ftruncate())");
 		setmsg(ret, COW_ERR_MAP, "failed to map shmfd (mmap())");
+		setmsg(ret, COW_ERR_POISONED, "trying to use a poisoned cow");
 
 		return ret;
 	}

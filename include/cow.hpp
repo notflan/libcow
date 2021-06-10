@@ -59,6 +59,8 @@ struct Cow : public _cow_util::Span<unsigned char> {
 
 	protected:
 	Cow(const Cow& c);
+	explicit inline Cow(std::shared_ptr<_inner>&& super) : super(std::move(super)){}
+
 	const std::shared_ptr<_inner> super;
 	virtual cow_t* get_raw() const;
 
@@ -82,11 +84,5 @@ struct Cow::Fake : public Cow {
 	private:
 
 	cow_t* const fake;
-};
-
-//TODO
-template<typename T>
-struct TypedCow : private Cow, public _cow_util::Span<T> {
-	struct Fake : private Cow::Fake, public _cow_util::Span<T>{};
 };
 

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cow/area.hpp>
+#include <cow/typed.hpp>
 
 using namespace _cow_util;
 

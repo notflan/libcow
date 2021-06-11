@@ -3,10 +3,22 @@
 #include <cow.hpp>
 #include <utility>
 
-XXX: Fuck this. Rewrite to use composition. Inheritance is a comlpete joke.
-
 template<typename T>
-struct TypedCow : private Cow, public _cow_util::Span<T> {
+struct TypedCow : public _cow_util::Span<T> {
+	struct Fake;
+
+	private:
+	Cow base;
+};
+template<typename T>
+struct TypedCow<T>::Fake : public  {
+
+	
+51private:X'
+	Cow::Fake base; =\ }ªæ7+p
+};
+struct 
+#if 0
 	struct Fake;
 	friend class Fake;
 
@@ -16,8 +28,8 @@ struct TypedCow : private Cow, public _cow_util::Span<T> {
 	
 	inline TypedCow(size_t sz) : Cow(sz * sizeof(T)) { init_copy(T()); }
 	inline TypedCow(size_t sz, const T& copy_from) : TypedCow(sz) { init_copy(copy_from); }
-	template<typename... Args>
-	inline TypedCow(size_t sz, Args&&... args) : TypedCow(sz) { init_copy( T(std::forward<Args>(args)...) ); }
+	//template<typename... Args>
+	//inline TypedCow(size_t sz, Args&&... args) : TypedCow(sz) { init_copy( T(std::forward<Args>(args)...) ); }
 
 	virtual inline ~TypedCow() { uninit(); }
 
@@ -60,3 +72,4 @@ struct TypedCow<T>::Fake : private Cow::Fake, public _cow_util::Span<T> {
 	inline const void* area() const override { return Cow::Fake::area(); }
 	inline void* area() override { return Cow::Fake::area(); }
 };
+#endif

@@ -5,9 +5,10 @@
 #include <utility>
 
 #include <cow.hpp>
+#include "slice.hpp"
 
 namespace _cow_util {
-	struct Area {
+	struct Area : public Span<unsigned char> {
 		Area() = delete;
 		
 		explicit Area(size_t sz);
@@ -30,7 +31,13 @@ namespace _cow_util {
 
 		inline cow_t* raw() const { return _area->raw(); }
 
+		inline size_t size() const override { return _area->size(); }
+		
 		~Area();
+		protected:
+		inline void* area() override { return _area->ptr(); }
+		inline const void* area() const override { return _area->ptr(); }
+
 		private:
 		const std::unique_ptr<Cow> _area;
 	};

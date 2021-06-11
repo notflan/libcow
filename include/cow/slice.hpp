@@ -4,17 +4,19 @@ namespace _cow_util {
 	/// A type that spans a sized region of memory
 	template<typename T>
 	struct Span {
+		protected:
 		virtual const void* area() const =0;
 		virtual void* area() = 0;
+		public:
 		virtual size_t size() const = 0;
 
-		inline T* ptr() { return (T*)area(); }
-		inline const T* ptr() const { return (const T*)area(); }
+		inline T* ptr() { return reinterpret_cast<T*>(area()); }
+		inline const T* ptr() const { return reinterpret_cast<const T*>(area()); }
 
 		inline size_t size_bytes() const { return size() * sizeof(T); }
 
-		inline unsigned char* as_bytes() { return (unsigned char*)area(); }
-		inline const unsigned char* as_bytes() const { return (const unsigned char*)area(); }
+		inline unsigned char* as_bytes() { return area_as<unsigned char>(); }
+		inline const unsigned char* as_bytes() const { return area_as<unsigned char>(); }
 
 		inline T& operator[](size_t index) {
 			if(index >= size()) throw "index out of range";
@@ -38,9 +40,9 @@ namespace _cow_util {
 		inline operator T*() { return &(*this)[0]; }
 
 		template<typename U>
-		inline U* area_as() requires(sizeof(T) % sizeof(U) == 0) { return (U*)area(); }
+		inline U* area_as() requires(sizeof(T) % sizeof(U) == 0) { return reinterpret_cast<U*>(area()); }
 		template<typename U>
-		inline const U* area_as() const requires(sizeof(T) % sizeof(U) == 0) { return (U*)area(); }
+		inline const U* area_as() const requires(sizeof(T) % sizeof(U) == 0) { return reinterpret_cast<const U*>(area()); }
 
 		template<typename U>
 		size_t size_as() const requires(sizeof(T) % sizeof(U) == 0) { return size_bytes() / sizeof(U); }
@@ -89,23 +91,24 @@ namespace _cow_util {
 		inline const Slice slice_wrap(ssize_t len) const { return slice_abs((size_t)wrap_len(len)); }
 
 		template<typename U>
-		inline Span<U>::Slice reinterpret() { return typename Span<U>::Slice((U*)area(), size_bytes() / sizeof(U)); }	
+		inline Span<U>::Slice reinterpret() { return typename Span<U>::Slice(area_as<U>(), size_bytes() / sizeof(U)); }	
 		template<typename U>
-		inline Span<const U>::Slice reinterpret() const { return typename Span<const U>::Slice((const U*)area(), size_bytes() / sizeof(U)); }
+		inline Span<const U>::Slice reinterpret() const { return typename Span<const U>::Slice(area_as<U>(), size_bytes() / sizeof(U)); }
 	};
 
 	/// A slice of memory with a backing pointer and size.
 	template<typename T>
 	struct Span<T>::Slice : public Span<T> {
-		inline Slice(T* ptr, size_t sz) : _area((void*)ptr), _size(sz){}
+		inline Slice(T* ptr, size_t sz) : _area(reinterpret_cast<void*>(ptr)), _size(sz){}
 		inline Slice(const Span<T>& slice) : _area(const_cast<void*>(slice.area())), _size(slice.size()){}
 		inline Slice(const Slice& copy) = default;
 		inline Slice(Slice&& copy) : _area(copy._area), _size(copy._size){ *const_cast<size_t*>(&copy._size) = 0; }
 		Slice() = delete;
-
+		
+		inline size_t size() const override { return _size; }
+		protected:
 		inline const void* area() const override { return _area; }
 		inline void* area() override { return _area; }
-		inline size_t size() const override { return _size; }
 	
 		private:
 		void* const _area;

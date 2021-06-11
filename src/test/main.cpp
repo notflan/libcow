@@ -147,7 +147,7 @@ namespace Tiling {
 template<typename T = unsigned char>
 void print_slice(Slice<T> memory)
 {
-	printf("slice: { %p, %lu (%lu bytes) }\n", memory.area(), memory.size(), memory.size_bytes());
+	printf("slice: { %p, %lu (%lu bytes) }\n", memory.ptr(), memory.size(), memory.size_bytes());
 
 }
 
@@ -210,7 +210,7 @@ int main()
 	
 	Cow::Fake clone = real;
 	printf("Fake size: %lu\n", clone.size());
-	printf("Fake ptr: %p\n", clone.area());
+	printf("Fake ptr: %p\n", clone.ptr());
 
 	read_fake(clone);
 	write_fake(clone, "hello fake!");

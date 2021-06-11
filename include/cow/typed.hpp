@@ -3,6 +3,8 @@
 #include <cow.hpp>
 #include <utility>
 
+XXX: Fuck this. Rewrite to use composition. Inheritance is a comlpete joke.
+
 template<typename T>
 struct TypedCow : private Cow, public _cow_util::Span<T> {
 	struct Fake;
@@ -17,35 +19,44 @@ struct TypedCow : private Cow, public _cow_util::Span<T> {
 	template<typename... Args>
 	inline TypedCow(size_t sz, Args&&... args) : TypedCow(sz) { init_copy( T(std::forward<Args>(args)...) ); }
 
-	inline ~TypedCow() { uninit(); }
+	virtual inline ~TypedCow() { uninit(); }
 
-	inline void* area() { return Cow::area(); }
-	inline const void* area() const { return Cow::area(); }
+	inline Cow::Fake clone() const override { return Cow::clone(); }
+	inline Fake clone() const { return Fake(Cow::clone()); }
+
 	inline size_t size() const override { return Cow::size() / sizeof(T); }
-
-	inline T& operator[](size_t i) { if (i>=size()) throw "idx"; else return *reinterpret_cast<T*>(this->as_bytes() + (sizeof(T) * i)); }
-	inline const T& operator[](size_t i) const { if (i>=size()) throw "idx"; else return *reinterpret_cast<const T*>(this->as_bytes() + (sizeof(T) * i)); }
-
+	
 	protected:
-	// Should only be used for creating Fakes. Copies the refcounted pointer.
-	inline TypedCow(const TypedCow<T>& copy) : Cow(copy.super) {}
+	inline void* area() override { return Cow::area(); }
+	inline const void* area() const override { return Cow::area(); }
+	//// Should only be used for creating Fakes. Copies the refcounted pointer.
+	//inline TypedCow(const TypedCow<T>& copy) : Cow(copy.super) {}
 
 	// UNSAFE: Placement-new's copys of `copy_from` into `0..size()` of this instance.
 	inline void init_copy(const T& copy_from) {
-		unsigned char* bytes = this->as_bytes();
+		T* ptr = _cow_util::Span<T>::ptr();
 		for(size_t i=0;i<size();i++)
-			new ((void*)(bytes + (sizeof(T)*i))) T(copy_from);
+			new ((void*)(ptr+i)) T(copy_from);
 
 	}
 	// UNSAFE: Explicitly calls destructors of each element in this instance.
 	inline void uninit() {
-		unsigned char* bytes = this->as_bytes();
+		T* ptr = _cow_util::Span<T>::ptr();
 		for(size_t i=0;i<size();i++)
-			reinterpret_cast<T*>(bytes + (sizeof(T)*i))->~T();
+			(ptr+i)->~T();
 	}
 };
 
 template<typename T>
 struct TypedCow<T>::Fake : private Cow::Fake, public _cow_util::Span<T> {
+	Fake() = delete;
+	explicit inline Fake(Cow::Fake&& untyped) : Cow::Fake(untyped){}
+	inline Fake(const Fake& copy) : Fake(copy.Cow::Fake::clone()){}
+	inline Fake(Fake&& move) : Cow::Fake(std::move(move)) {}
+	inline ~Fake(){}
 
+	inline size_t size() const override { return Cow::Fake::size(); }
+	protected:
+	inline const void* area() const override { return Cow::Fake::area(); }
+	inline void* area() override { return Cow::Fake::area(); }
 };

@@ -4,3 +4,5 @@ cow-*
 obj/
 *~
 vgcore.*
+target/
+!cowslice/*.a

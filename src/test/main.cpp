@@ -169,6 +169,12 @@ void moving_cow(Cow moved)
 	read_fake(moved);
 }
 
+void typed_cow()
+{
+	TypedCow<int> tc(1024);
+	
+}
+
 int main()
 {
 	Cow _area(4000);
@@ -217,6 +223,7 @@ int main()
 	printf("First byte of: fake = %x\n", clone[0]);
 	read_fake(clone); //clone still functions because of refcount on origin.
 
+	typed_cow();
 	printf("Last error: %d, %s\n", cow_err(), *cow_err_msg(cow_err()));
 	try {
 		Cow should_fail(SIZE_MAX);

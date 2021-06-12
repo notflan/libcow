@@ -7,17 +7,63 @@ template<typename T>
 struct TypedCow : public _cow_util::Span<T> {
 	struct Fake;
 
+	template<typename... Args>
+	inline TypedCow(size_t sz, Args&&... args) : real(Cow(sz * sizeof(T))) { init_copy( T(std::forward<Args>(args)...) ); }
+	inline TypedCow(size_t sz, const T& copy) : real(Cow(sz * sizeof(T))) { init_copy(copy); }
+	inline TypedCow(size_t sz) : TypedCow(sz, T()){}
+
+	inline virtual ~TypedCow() { uninit(); }
+
+	inline virtual Fake clone() const { return Fake(*this); }
+
+	inline virtual cow_t* raw() const { return real.raw(); }
+
+	inline size_t size() const { return real.size() / sizeof(T); }
+	protected:
+	//inline explicit TypedCow(const TypedCow<T>& unsafeCopy) : real(Cow(unsafeCopy.real)){}
+
+	inline virtual void* area() override { return reinterpret_cast<void*>( real.ptr() ); }
+	inline virtual const void* area() const override { return reinterpret_cast<const void*>( real.ptr() ); }
+
+	inline void init_copy(const T& copy_from) {
+		T* ptr = this->ptr();
+		for(size_t i=0;i<size();i++)
+			new ((void*)(ptr+i)) T(copy_from);
+
+	}
+	// UNSAFE: Explicitly calls destructors of each element in this instance.
+	inline void uninit() {
+		T* ptr = this->ptr();
+		if(!ptr) return;
+
+		for(size_t i=0;i<size();i++)
+			(ptr+i)->~T();
+	}
 	private:
-	Cow base;
+	Cow real;
 };
 template<typename T>
-struct TypedCow<T>::Fake : public  {
+struct TypedCow<T>::Fake : public TypedCow<T>  {
+//XXX: How THE FUCK do we initialise base's `real` here?????
+	Fake() = delete;
 
+	inline Fake(const Fake& copy) : fake(cow_clone(copy.fake)){}
+	inline Fake(Fake&& move) : fake(move.fake) { *const_cast<cow_t**>(&move.fake) = nullptr; }
+	inline Fake(const TypedCow<T>& clone) : fake(cow_clone(clone.raw())){}
+
+	inline cow_t* raw() const override { return fake; }
+	inline Fake clone() const override { return Fake(*this); }
+
+	inline ~Fake(){}
+
+	inline size_t size() const override { return fake ? cow_size(fake) : 0; }
+	protected:
+	inline void* area() override { return fake ? cow_ptr(fake) : nullptr; }
+	inline const void* area() const override { return fake ? cow_ptr_of(const void, fake) : nullptr; }
 	
-51private:X'
-	Cow::Fake base; =\ }ªæ7+p
+	private:
+	cow_t* const fake;
 };
-struct 
 #if 0
 	struct Fake;
 	friend class Fake;

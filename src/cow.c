@@ -76,13 +76,13 @@ size_t cow_size(const cow_t* cow)
 	return cow->size;
 }
 
-inline internal cow_t _cow_create_unboxed(size_t size)
+inline internal cow_t _cow_create_unboxed(int _fd, size_t size)
 {
 	cow_t ret;
 
 	ret.size = size;
 	if( (ret.poisoned = 
-		((ret.fd = shm_fd(size)) == -1))
+		((ret.fd = _fd < 0 ? shm_fd(size) : _fd) == -1))
 	) {
 		ret.origin = NULL;
 		return ret;
@@ -96,7 +96,14 @@ inline internal cow_t _cow_create_unboxed(size_t size)
 }
 cow_t* cow_create(size_t size)
 {	
-	return box_value(_cow_create_unboxed(size));
+	return box_value(_cow_create_unboxed(-1, size));
+}
+
+cow_t* cow_create_fd(int fd, size_t size)
+{
+	fd = dup(fd);
+	if(__builtin_expect(fd < 0, false)) return NULL;
+	return box_value(_cow_create_unboxed(fd, size));
 }
 
 inline internal void _cow_free_unboxed(const cow_t* cow)

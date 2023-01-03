@@ -5,7 +5,7 @@ PROJECT=cow
 AUTHOR=Avril (Flanchan) <flanchan@cumallover.me>
 
 VERSION_MAJOR=0
-VERSION_MINOR=2.0
+VERSION_MINOR=3.0
 VERSION=$(VERSION_MAJOR).$(VERSION_MINOR)
 
 ifeq ($(PREFIX),)

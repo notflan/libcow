@@ -21,7 +21,9 @@ struct Cow : public _cow_util::Span<unsigned char> {
 	struct Fake;
 	Cow() = delete;
 
+	Cow(int fd, size_t size);
 	explicit Cow(size_t size);
+
 	Cow(Cow&& m);
 	virtual ~Cow();
 

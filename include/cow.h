@@ -35,6 +35,13 @@ typedef struct cow_mapped_slice cow_t;
 /// Writes to this instance pointer (`cow_ptr()`) are written to the allocated memory.
 /// Writes to any cloned instances do not propagate to this instance.
 cow_t* cow_create(size_t size);
+/// Create a new copy-on-write area of `size` bytes from file `fd`. 
+/// Writes to this instance pointer (`cow_ptr()`) are written to the allocated memory.
+/// Writes to any cloned instances do not propagate to this instance.
+///
+/// The resulting object does not own `fd`, but does own a duplicate of it.
+cow_t* cow_create_fd(int fd, size_t size);
+
 /// Free a cow area. This should be called on all clones before the parent of those clones is freed.
 void cow_free(cow_t* restrict cow);
 /// Create a clone of this instance. Any writes to the returned pointer will not be propagated to the input one.

@@ -44,7 +44,7 @@ _Static_assert
 		(offsetof(cow_t, size) == sizeof(void*), "`cow_t.size` should have an offset equal to `sizeof(void*)` or cow_size_unsafe() becomes UB.");
 #endif
 
-cow_t _cow_create_unboxed(size_t size) internal;
+cow_t _cow_create_unboxed(int rfd, size_t size) internal;
 void _cow_free_unboxed(const cow_t* cow) internal;
 
 #ifdef __cplusplus

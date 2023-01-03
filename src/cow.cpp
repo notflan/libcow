@@ -15,6 +15,7 @@ struct Cow::_inner {
 
 	~_inner();
 	_inner(size_t sz);
+	_inner(int fd, size_t sz);
 	_inner(cow_t* ptr);
 
 	_inner(const _inner& copy) = delete;
@@ -27,10 +28,12 @@ Cow::_inner::~_inner() {
 	_cow_free_unboxed(ptr());
 	cow.poisoned=true;
 }
-Cow::_inner::_inner(size_t sz) : cow(_cow_create_unboxed(sz)){
+Cow::_inner::_inner(int fd, size_t sz) : cow(_cow_create_unboxed(fd, sz)){
 	
 	if(UNLIKELY(cow.poisoned)) throw CowException(cow_err());
 }
+Cow::_inner::_inner(size_t sz) : _inner(-1, sz) {}
+
 Cow::_inner::_inner(cow_t* ptr) : cow(*ptr)
 {
 	free(ptr);
@@ -38,6 +41,7 @@ Cow::_inner::_inner(cow_t* ptr) : cow(*ptr)
 }
 
 Cow::Cow(size_t size) : super(std::make_shared<_inner>(size)){}
+Cow::Cow(int fd, size_t size) : super(std::make_shared<_inner>(fd, size)){}
 Cow::Cow(cow_t* raw) : super(std::make_shared<_inner>(raw)){}
 
 Cow::Cow(Cow&& m) : super(std::move(*const_cast<std::shared_ptr<_inner>*>(&m.super))){}
